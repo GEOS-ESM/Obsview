@@ -1,5 +1,4 @@
 function obsplot(arg,varargin)
-
 % OBSPLOT Plot observation attributes.
 %
 % OBSPLOT(ODS) produces a plot summarizing the data in the
@@ -9,7 +8,6 @@ function obsplot(arg,varargin)
 % 25Oct2001 Dick Dee (dee@gmao.gsfc.nasa.gov)
 % 23Apr2004 Dick Dee - ECMWF version
 % 18Nov2004 Dick Dee - GSI version
-
 
 if ischar(arg), % must be a callback
     feval(arg,varargin{:})      % simply pass to the callback routine..
@@ -23,13 +21,11 @@ else            % otherwise this will set up a new plot
         interactive = true;
     end
 end
-
 if interactive,
     hGui = findobj('Tag','ObsviewGui');   % get handle to obsview gui, if it exists
 else
     hGui = [];
 end
-
 % possibly remove data that failed QC
 
 if ~isempty(hGui)&&strcmp(get(findobj(hGui,'Tag','qcxclear'),'Checked'),'on'),
@@ -44,15 +40,13 @@ if nall==0, return, end   % must have data to plot.
 
 if ~isempty(hGui), newfig = strcmp(get(findobj(hGui,'Tag','newfig'),'Checked'),'on'); 
 else, newfig = 0; end
-
 if ~newfig,         % see if we can find a previous obsplot figure window
     hFig = gcbf;
     if ~strcmp(get(hFig,'Tag'),'obsplot'), 
-        h = findobj('Type','figure','Tag','obsplot'); 
-        if any(h), hFig = h(end); else, newfig = 1; end
+        h = findobj('Type','figure','Tag','obsplot');
+	if ~isempty(h), hFig = h(end); else, newfig = 1; end
     end
 end
-
 if newfig,   
     hFig = figure;           % create a new figure window ...
     set(hFig,'Tag','obsplot','Color','w',...
@@ -100,7 +94,6 @@ sns = [];
 for i = 1:length(SENSORS),
   if any(ismember(SENSORS(i).kxs,ods.kx)), sns = [sns i]; end
 end
-
 % create the different components of the figure
 
 TtlPosition = [0.05 0.92 0.90 0.05];   % titles
@@ -275,8 +268,12 @@ case 'create'
     
     if xlim(1)==xlim(2),                   % this means all longitudes: global map
         clon = 0;                          % by default, center global map at lon=0
-        hGui = findobj('Tag','ObsviewGui');
-        if any(hGui),                      % possible override by obsview gui option
+        hGui = findobj('Tag','ObsviewGui')
+	%any(hGui)
+	%exist(hGui)
+	%isempty(hGui)
+	
+        if ~isempty(hGui),                      % possible override by obsview gui option
             if strcmp(get(findobj(hGui,'Tag','dateline'),'Checked'),'on'), clon = 180; end
         end
         xlim = clon + [-180 180]; 
@@ -285,35 +282,18 @@ case 'create'
     elseif xlim(2)<0 &&xlim(2)<xlim(1),
         xlim(2) = xlim(2) + 360;         
     end                           
-    
     set(hAxes,'XLim',xlim,'YLim',ylim,...
         'Box','on','XGrid','on','YGrid','on',...
         'Color',[0.8 0.9 1.0]);
     if diff(xlim)==360, set(hAxes,'XTick',linspace(xlim(1),xlim(2),7)); end
     if diff(ylim)==180, set(hAxes,'YTick',-60:30:60); end
-    
     pcoast(hAxes)
-    
     lon = ods.lon;
     if xlim(1)<-180, i = (lon>xlim(1)+360); lon(i) = lon(i) - 360; end
     if xlim(2)> 180, i = (lon<xlim(2)-360); lon(i) = lon(i) + 360; end
 
     iz = 0;
-    ncolors = length(ods.cinfo);
-    cvec = [3 2 1];
-    if ncolors==3,
-      for ax=1:ncolors,
-        ix = cvec(ax);
-        ic = ods.cidx==ix;
-        if any(ic),
-            iz = iz + 1;
-            hLine = plot(lon(ic), ods.lat(ic), ...
-                '.','Markersize',12,'Color',ods.cinfo(ix).rgb,'Tag','obsloc');
-            set(hLine,'UserData',ix,'ZData',iz*ones(1,sum(ic)))
-        end
-      end
-    else
-      for ix = 1:length(ods.cinfo),
+    for ix = 1:length(ods.cinfo),
         ic = ods.cidx==ix;
         if any(ic),
             iz = iz + 1;
@@ -321,8 +301,7 @@ case 'create'
                 '.','Markersize',12,'Color',ods.cinfo(ix).rgb,'Tag','obsloc');
             set(hLine,'UserData',ix,'ZData',iz*ones(1,sum(ic)))
 %           disp([int2str(iz) ':  ' ods.cinfo(ix).txt])
-        end
-      end
+       end
     end
     
 case 'domain'
@@ -596,41 +575,40 @@ end
 
 %-------------------------------------------------------------------------
 function pcoast(hAxes)
-
 xlim = get(hAxes,'XLim');
 
-load coast
-i = [0; find(isnan(long)); length(long)];
+load coastlines
+i = [0; find(isnan(coastlon)); length(coastlon)];
 for j = 2:length(i)-1,
     is = i(j)+1:i(j+1)-1;
-    patch(long(is),lat(is),[0.6 0.7 0.5])
+    patch(coastlon(is),coastlat(is),[0.6 0.7 0.5])
 end
 for j = 1,     % this is a hack to fix Antartica
     is = i(j)+1:i(j+1)-1;
-    patch([-180; long(is); 180],[-90; lat(is); -90],[0.6 0.7 0.5])
+    patch([-180; coastlon(is); 180],[-90; coastlat(is); -90],[0.6 0.7 0.5])
 end
 
 if xlim(1)<-180,  % this is a crude way to handle dateline crossing
-    long = long - 360; 
+    coastlon = coastlon - 360; 
     for j = 2:length(i)-1,
         is = i(j)+1:i(j+1)-1;
-        patch(long(is),lat(is),[0.6 0.7 0.5])
+        patch(coastlon(is),coastlat(is),[0.6 0.7 0.5])
     end
     for j = 1,
         is = i(j)+1:i(j+1)-1;
-        patch([xlim(1); long(is); -180],[-90; lat(is); -90],[0.6 0.7 0.5])
+        patch([xlim(1); coastlon(is); -180],[-90; coastlat(is); -90],[0.6 0.7 0.5])
     end
 end
 
 if xlim(2)>180,  % this is a crude way to handle dateline crossing
-    long = long + 360; 
+    coastlon = coastlon + 360; 
     for j = 2:length(i)-1,
         is = i(j)+1:i(j+1)-1;
-        patch(long(is),lat(is),[0.6 0.7 0.5])
+        patch(coastlon(is),coastlat(is),[0.6 0.7 0.5])
     end
     for j = 1,
         is = i(j)+1:i(j+1)-1;
-        patch([180; long(is); xlim(2)],[-90; lat(is); -90],[0.6 0.7 0.5])
+        patch([180; coastlon(is); xlim(2)],[-90; coastlat(is); -90],[0.6 0.7 0.5])
     end
 end
 

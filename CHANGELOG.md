@@ -10,7 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
-
+Changed how ods files (netcdf version 5) were interacted with from the old hdfsd utility to the
+new netcdf one.
 ### Fixed
 
 ### Removed

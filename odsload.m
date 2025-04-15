@@ -1,5 +1,4 @@
 function ods = odsload(varargin)
-
 % ODSLOAD Load ODS data structure from file.
 %
 %    ODS = ODSLOAD(FNAME) reads all data from the ODS file FNAME, including
@@ -72,7 +71,6 @@ else                                % all attributes
    lhour = ods.latest_synoptic_hour;
    nhour = ods.synoptic_hours_per_day;
 end
-
 % initialize attribute fields:
 
 for field = attrs,
@@ -83,7 +81,6 @@ end
 
 nsonfile = 1 + nhour*(ljday - fjday + lhour/24);
 is = [];
-
 switch nargs
 
 case 0,   % load entire file
@@ -107,7 +104,6 @@ case 2,   % data for one or more synoptic hours
    is(is>nsonfile) = [];
 
 end
-
 if isempty(is), return, end
 
 if any(is<1|is>nsonfile)||~isequal(is,round(is)),
@@ -121,113 +117,102 @@ isbeg = is(1+[0 i]);
 isend = is([i length(is)]);
 
 % get the raw data from file:
-
 ods = getdata(ods,odsfile,isbeg,isend,attrs);
-
 % scale and offset:
-
 ods = convert(ods,attrs);
-
 %--------------------------------------------------------------------
 
 function ods = getdata(ods,odsfile,isbeg,isend,attrs)
 
 % this function reads ODS attribute data from file
-
 % open the file:
-
-SD_id = hdfsd('start',odsfile,'read');
-if SD_id==-1, error(['Can''t open ' odsfile]); end
+SD_id = netcdf.open(odsfile);
+%SD_id = hdfsd('start',odsfile,'read');
+%if SD_id==-1, error(['Can''t open ' odsfile]); end
 
 % get pointers to synoptic times on file:
-
 [idx,nob] = getstidx(SD_id);
-disp('inside getdata after getstidx');
 % idx: column vector of indices of first obs for each synoptic time
 % nob: column vector with total number of obs for each synoptic time
 
 for k = 1:length(isbeg),
-    disp('inside k loop')
-
-    ibeg = idx(isbeg(k));                           % index of first obs to be read
+    ibeg = idx(isbeg(k));                          % index of first obs to be read
     iend = ibeg + sum(nob(isbeg(k):isend(k))) - 1;  % index of last obs to be read
 
     for name = attrs,
 
-        dset_name = name{1};
-        dset_idx = hdfsd('nametoindex',SD_id,dset_name);
-        sds_id = hdfsd('select',SD_id, dset_idx);
-        [dname,rank,dimsizes,data_type,nattrs,status] = hdfsd('getinfo',sds_id);
-	disp(dname);
-	disp('dimsizes');
-        disp(dimsizes);
-        disp(dimsizes(1));
-        disp(dimsizes(2));
-	disp('nattrs');
-        disp(nattrs);
+        dset_name = char(name{1});
 	
+	dset_idx = netcdf.inqVarID(SD_id,dset_name);
+	[dname,data_type,dimids,nattrs] = netcdf.inqVar(SD_id,dset_idx);
+	[dimname1,dimsize1] = netcdf.inqDim(SD_id,dimids(1));
+        [dimname2,dimsize2] = netcdf.inqDim(SD_id,dimids(2));
+	
+        %dset_idx = hdfsd('nametoindex',SD_id,dset_name);
 
-        if rank==2,
+        %sds_id = hdfsd('select',SD_id, dset_idx);
+        %[dname,rank,dimsizes,data_type,nattrs,status] = hdfsd('getinfo',sds_id);
 
-           blen = dimsizes(2);                % length of each batch
+        if length(dimids)==2,
+
+           [dimname blen] = netcdf.inqDim(SD_id,dimids(1));                % length of each batch
            bbeg = floor((ibeg-1)/blen);       % index (zero-base) of first batch to read
            bend = floor((iend-1)/blen);       % index (zero-base) of last batch to read
-	   disp([blen bbeg bend]);
 
            start  = [bbeg 0];
            stride = [1 1];
            edge   = [bend-bbeg+1 blen];
-	   disp(start);
-           disp(stride);
-           disp(edge);
-           [data,status] = hdfsd('readdata',sds_id,start,stride,edge);
-	   whos data
-           if status==-1,
-              hdfsd('end',SD_id);
-              error(['Can''t read ' dset_name '.'])
-           end
+	   data = netcdf.getVar(SD_id,dset_idx); %,start,stride,edge)
+	   
+           %[data,status] = hdfsd('readdata',sds_id,start,stride,edge);
+           %if status==-1,
+           %   hdfsd('end',SD_id);
+           %   error(['Can''t read ' dset_name '.'])
+           %end
            i1 = rem(ibeg-1,blen)+1;
 	   i2 = i1 + (iend-ibeg);
            attr = data(i1:i2);
-           ods.(dset_name) = [ods.(dset_name); attr(:)]
+           ods.(dset_name) = [ods.(dset_name); attr(:)];
            for attr_idx = 0:nattrs-1,
-	       attr_idx
+	       name = netcdf.inqAttName(SD_id,dset_idx,attr_idx);
 
-               [name,data_type,count,status] = hdfsd('attrinfo',sds_id,attr_idx)
-               if status==-1, error('hdfsd(''attrinfo'') failed.'); end
+               %[name,data_type,count,status] = hdfsd('attrinfo',sds_id,attr_idx);
+               %if status==-1, error('hdfsd(''attrinfo'') failed.'); end
                if strcmp(name,'add_offset'),
-                  [add_offset,status] = hdfsd('readattr',sds_id,attr_idx);
-                  if status==-1, error('hdfsd(''readattr'') failed.'); end
+		  add_offset = netcdf.getAtt(SD_id,dset_idx,name);
+                  %[add_offset,status] = hdfsd('readattr',sds_id,attr_idx);
+                  %if status==-1, error('hdfsd(''readattr'') failed.'); end
                   ods.([dset_name '_offset']) = add_offset;
                end
                if strcmp(name,'scale_factor'),
-                  [scale_factor,status] = hdfsd('readattr',sds_id,attr_idx);
-               if status==-1, error('hdfsd(''readattr'') failed.'); end
-               ods.([dset_name '_scale']) = scale_factor;
+                  %[scale_factor,status] = hdfsd('readattr',sds_id,attr_idx);
+		  scale_factor = netcdf.getAtt(SD_id,dset_idx,name);
+            	  %if status==-1, error('hdfsd(''readattr'') failed.'); end
+                  ods.([dset_name '_scale']) = scale_factor;
                end
                if strcmp(name,'missing_value'),
-                  [missing_value,status] = hdfsd('readattr',sds_id,attr_idx);
-                  if status==-1, error('hdfsd(''readattr'') failed.'); end
+		  missing_value = netcdf.getAtt(SD_id,dset_idx,name);
+                  %[missing_value,status] = hdfsd('readattr',sds_id,attr_idx);
+                  %if status==-1, error('hdfsd(''readattr'') failed.'); end
                   ods.([dset_name '_missing']) = missing_value;
                end
 
            end
+
         end
 
-        hdfsd('endaccess',sds_id);
+        %hdfsd('endaccess',sds_id);
 
     end
 end
-
 % close the file:
-%disp(ods);
-status = hdfsd('end',SD_id);
-if status==-1, error(['Can''t close ' odsfile]); end
+netcdf.close(SD_id);
+%status = hdfsd('end',SD_id);
+%if status==-1, error(['Can''t close ' odsfile]); end
 
 %--------------------------------------------------------------------
 
 function [idx,nobs] = getstidx(SD_id);
-
 % this function returns:
 %
 %      idx : column vector of indices of first obs for each synoptic time
@@ -238,33 +223,46 @@ function [idx,nobs] = getstidx(SD_id);
 collect = [];
 
 for name = {'syn_beg','syn_len'},
-
    dset_name = char(name);
-   idx = hdfsd('nametoindex',SD_id,dset_name);
-   sds_id = hdfsd('select',SD_id, idx);
-   [dname,rank,dimsizes,data_type,nattrs,status] = hdfsd('getinfo',sds_id);
-   if status==-1,
-        hdfsd('end',SD_id);
-        error(['Can''t read ' dset_name '.'])
-   end
-
-   if all(isfinite(dimsizes)) && length(dimsizes)==2,
+   idx = netcdf.inqVarID(SD_id,dset_name);
+   %idx = hdfsd('nametoindex',SD_id,dset_name);
+   %sds_id = hdfsd('select',SD_id, idx);
+   %[dname,rank,dimsizes,data_type,nattrs,status] = hdfsd('getinfo',sds_id);
+   [dname,data_type,dimids,nattrs] = netcdf.inqVar(SD_id,idx);
+   % this actually returns dimension IDs, the old one returns dimension sizes
+   % so search for each dimension ID and return the names to see what they are
+   [dimname2, dimlen2] = netcdf.inqDim(SD_id,dimids(2));
+   
+   [dimname1, dimlen1] = netcdf.inqDim(SD_id,dimids(1));
+   dimsizes = [dimlen2 dimlen1];
+   %if status==-1,
+   %     hdfsd('end',SD_id);
+   %     error(['Can''t read ' dset_name '.'])
+   %end
+   %ncid = netcdf.open("example.nc","NOWRITE");
+   
+   % Retrieve identifier of dimension.
+   %dimid = netcdf.inqDimID(ncid,dimname)
+   if all(isfinite(dimsizes)) && length(dimids)==2,
 
       start  = [0 0];
       stride = [1 1];
       edge   = dimsizes;
-      [data,status] = hdfsd('readdata',sds_id,start,stride,edge);
-      if status==-1,
-         hdfsd('end',SD_id);
-         error(['Can''t read ' dset_name '.'])
-      end
-      disp('post getvar')
+      %[data,status] = hdfsd('readdata',sds_id,start,stride,edge);
+      %data = netcdf.getVar(SD_id,idx,start,stride,edge)
+      data = netcdf.getVar(SD_id,idx);
+      %if status==-1,
+      %   hdfsd('end',SD_id);
+      %   error(['Can''t read ' dset_name '.'])
+      %end
+
       collect = [collect double(data(:))];
-      hdfsd('endaccess',sds_id);
+      %hdfsd('endaccess',sds_id);
 
    else
 
-      hdfsd('end',SD_id);
+      %hdfsd('end',SD_id);
+      netcdf.close(SD_id);
       error(['Unexpected dimensions of ' dset_name '.']);
 
    end
@@ -273,16 +271,13 @@ end
 
 idx  = collect(:,1); % beginning indices for each synoptic time
 nobs = collect(:,2); % number of obs for each synoptic time
-
-n = sum(nobs);       % total number of obs on file
+n = sum(nobs);% total number of obs on file
 i = find(idx<=n);    % remove out-of-bound indices:
-idx  = idx(i);
-nobs = nobs(i);
-disp('leaving getstidx')
+idx  = idx(i)
+nobs = nobs(i)
 %--------------------------------------------------------------------
 
 function ods = convert(ods,attrs)
-
 % applies scaling and offsets, and changes some attribute names
 
 for attr = attrs
@@ -339,4 +334,3 @@ for attr = attrs
     end
     
 end
-

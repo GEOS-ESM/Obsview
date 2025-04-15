@@ -9,11 +9,12 @@
 # TBPATH    paths for required MATLAB toolbox directories 
 #
 # 01Apr2005 Dick Dee (dee@gmao.gsfc.nasa.gov)
-#
+# 15Apr2025 Wesley Davis (wesley.j.davis@nasa.gov)
 # --------------------------------------------------------------
 
-set MATLAB  = '/ford1/local/bin/matlab -nojvm -nosplash'
+set MATLAB  = '/ford1/local/matlab_r2024a/bin/matlab'
 set TBPATH  = '/ford1/local/obsview'
+#set TBPATH = '/home/wjdavis5/obsview'
 
 # Parse input arguments:
 # ---------------------
@@ -95,7 +96,6 @@ end
 if ( $EXPID == 0 ) goto usage
 
 if ( -e matlabscript.m ) /bin/rm matlabscript.m
-
 echo diary obs2html.log                           > matlabscript.m
 echo addpath $TBPATH -begin                      >> matlabscript.m
 echo warning off                                 >> matlabscript.m
@@ -112,6 +112,7 @@ echo "  options.plotdpi = '$PLOTDPI';"           >> matlabscript.m
 if ( !( $BEGDATE == 0 ) ) then
    echo "  obs2html('$EXPID','$BEGDATE','$ENDDATE',options);">> matlabscript.m
 else
+   echo "  obs2html('$EXPID','$argv',options);"
    echo "  obs2html('$EXPID','$argv',options);"  >> matlabscript.m
 endif
 echo catch                                       >> matlabscript.m
@@ -124,6 +125,7 @@ echo quit                                        >> matlabscript.m
 echo "obs2html: Starting MATLAB, please wait..."
 
 nohup $MATLAB < matlabscript.m
+
 
 # Done.
 # ----
@@ -186,7 +188,6 @@ NOTE
      then it must be surrounded with double quotes.
      
 Dick Dee (dee@gmao.gsfc.nasa.gov) - Version of 18May2005
-
+Wesley Davis (wesley.j.davis@nasa.gov) - Version of 15Apri2025
 ---//---
 exit 1
-

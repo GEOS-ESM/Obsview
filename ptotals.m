@@ -98,18 +98,18 @@ subplot('Position',[0.6 0.87-ph 0.35 ph])
    rmsa  = zero; rmsa(i) = sqrt(soma2(i)./n(i));
 
    hrf = barh((1:nlev)+0.1,rmsf,0.6); hold on
-   hra = barh((1:nlev)-0.1,rmsa,0.6); hold on
    hmf = barh((1:nlev)+0.1,meanf,0.6); hold on
+   hra = barh((1:nlev)-0.1,rmsa,0.6); hold on
    hma = barh((1:nlev)-0.1,meana,0.6); hold off
    set(hrf,'FaceColor','b','EdgeColor','none')
-   set(hra,'FaceColor','r','EdgeColor','none')
    set(hmf,'FaceColor','c','EdgeColor','none')
-   set(hma,'FaceColor',[1 0.8 0],'EdgeColor','none')   
+   set(hra,'FaceColor','r','EdgeColor','none')
+   set(hma,'FaceColor',[1 0.5 0],'EdgeColor','none')   
    xmax = max([rmsf' rmsa']);
    xmin = min([0 meanf' meana']);
    if xmin<0, xmin = min(xmin,-0.15*xmax); end
    xlim = 1.1*[xmin xmax];
-   ptaxis(lev,xlim,'mean(O-B)','c','rms(O-B)','b','mean(O-A)',[1 0.8 0],'rms(O-A)','r')
+   ptaxis(lev,xlim,'mean(O-B)','c','rms(O-B)','b','mean(O-A)',[1 0.5 0],'rms(O-A)','r')
     
 % Jo(bkg)/n, Jo(ana)/n
 % --------------------
@@ -169,7 +169,7 @@ x = xlim(1);
 y = ylim(2)+0.02*diff(ylim);
 for i = 1:np
     h = text(x,y,[' ' varargin{2*i-1}],'Color',varargin{2*i},...
-        'FontSize',9,'FontWeight','b',...
+        'FontSize',10,'FontWeight','b',...
         'HorizontalAlignment','left',...
         'VerticalAlignment','bottom');
     pos = get(h,'Extent');
