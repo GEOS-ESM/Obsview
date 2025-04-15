@@ -83,9 +83,9 @@ subplot('Position',[0.1 0.65 0.8 0.22])
    else
        h = bar([time time time; 0 0 0], [nana npsv nexcl; 0 0 0],'stack');
    end
-   set(h,{'FaceColor'},{'g';[1 0.5 0];'r'}, 'EdgeColor','none')
+   set(h,{'FaceColor'},{'g';[1 0.5 0];'r'})
    ylim = [0 1.1*max(nobs)];
-   ptaxes(time,ylim,1,'Data counts:','k','Used (p)','g','Passive',[1 0.5 0],'Not used','r')
+   ptaxes(time,ylim,0,'Data counts:','k','Used (p)','g','Passive',[1 0.5 0],'Not used','r')
 
 % Omf, oma statistics
 % -------------------
@@ -101,16 +101,16 @@ subplot('Position',[0.1 0.35 0.8 0.22])
    if nt>1, dt = 0.1*(time(end)-time(1))/(nt-1);
    else, dt = 0.2; end
    hrf = bar(time-dt,trmsf,0.6); hold on
-   hra = bar(time+dt,trmsa,0.6); hold on
    hmf = bar(time-dt,tmeanf,0.6); hold on
-   hma = bar(time+dt,tmeana,0.4); hold off
+   hra = bar(time+dt,trmsa,0.6); hold on
+   hma = bar(time+dt,tmeana,0.6); hold off
    set(hrf,'FaceColor','b','EdgeColor','none')
-   set(hra,'FaceColor','r','EdgeColor','none')
    set(hmf,'FaceColor','c','EdgeColor','none')
-   set(hma,'FaceColor',[1 0.8 0],'EdgeColor','none')
+   set(hra,'FaceColor','r','EdgeColor','none')
+   set(hma,'FaceColor',[1 0.5 0],'EdgeColor','none')
    line([time(1)-1 time(end)+1],[0 0],'Color','k')
    ylim = 1.1*[min([0 tmeanf' tmeana']) max([trmsf' trmsa'])];
-   ptaxes(time,ylim,0,'Data residuals:','k','rms(O-B)','b','rms(O-A)','r','mean(O-B)','c','mean(O-A)',[1 0.8 0])
+   ptaxes(time,ylim,0,'Data residuals:','k','mean(O-B)','c','rms(O-B)','b','mean(O-A)',[1 0.5 0],'rms(O-A)','r')
      
 % Jo(bkg)/n, Jo(ana)/n
 % --------------------

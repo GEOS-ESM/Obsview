@@ -156,7 +156,6 @@ switch attr
       ods.cidx(ods.qcx> 1) = 3;
       ods.cinfo(3).rgb = [1 0 0];   % red
       ods.cinfo(3).txt = 'Rejected by QC';
-      ods.cidx(ods.qcx==7) = 2;
 
    case 'qch'
 

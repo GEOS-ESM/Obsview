@@ -58,7 +58,7 @@ end
 % ---------------
 if ~isfield(options,'grpfile'), options.grpfile = 'obsgroups'; end
 if ~isfield(options,'grpnums'), options.grpnums = []         ; end
-if ~isfield(options,'dsynhhs'), options.dsynhhs = [0 3 6 9 12 15 18 21]; end
+if ~isfield(options,'dsynhhs'), options.dsynhhs = [0 6 12 18]; end
 if ~isfield(options,'tsintvl'), options.tsintvl = 1          ; end
 if ~isfield(options,'dirname'), options.dirname = 'obsmon'   ; end
 
@@ -81,7 +81,7 @@ switch narg
       grpnums = options.grpnums;
       dirname = options.dirname;
       
-      %warning off MATLAB:MKDIR:DirectoryExists
+      warning off MATLAB:MKDIR:DirectoryExists
       
       if isfield(options,'groups') && isstruct(options.groups),
          groups = options.groups;
@@ -93,9 +93,8 @@ switch narg
          % -----------------------------
          if strcmp(grpfile(end-1:end),'.m'), grpfile(end-1:end) = []; end
          try, groups = feval(grpfile);
-	 groups
          catch, error([grpfile ' is not a valid .m file.']), end
-
+	 
       end
 
       % check against saved definitions, if any
@@ -133,15 +132,19 @@ switch narg
                makedata(odsfiles{i},expid,groups,grpnums,options)
             end
          end
-      elseif ischar(odsfiles)   % file name, possibly including '*'
+      elseif ischar(odsfiles) 
          sdir = dir(odsfiles);
          path = stripfn(odsfiles);
          for i = 1:length(sdir)
             odsfile = [path sdir(i).name];
-            if isodsfile(odsfile)
-               nfs = nfs + 1;
-               makedata(odsfile,expid,groups,grpnums,options)
-            end
+	    getodsinfo(odsfile);
+	    nfs = nfs +1;
+	    makedata(odsfile,expid,groups,grpnums,options)
+            %if isodsfile(odsfile)
+	    %   disp('is ods file')
+            %   nfs = nfs + 1;
+            %   makedata(odsfile,expid,groups,grpnums,options)
+            %end
          end
       else
          help(mfilename)
@@ -247,9 +250,9 @@ plotdpi = options.plotdpi;
 
 % time info from ods file
 % -----------------------
-try, [fjday,ljday,lhour,nhour,nobs] = getodstimeinfo(odsfile);
+try, [fjday,ljday,lhour,nhour,nobs] = getodstimeinfo(odsfile)
 catch, error([odsfile ' is not a valid ODS file.']), end
-
+%exit
 % store time information for later use
 % ------------------------------------
 n = 0; nh = 0; dates = [];
@@ -274,7 +277,6 @@ for jday = fjday:ljday
 end
 nds = length(dates);
 if nds==0, return; end % nothing to do
-
 % create directory structure as needed
 % ------------------------------------
 for k = grpnums
@@ -314,10 +316,10 @@ for n = 1:nds    % for each synoptic time
    % set qcx for large sigo, and other clean-up:
    % ------------------------------------------
    ods = odsclean(ods);
-
    % subset the data for each group:
    % ------------------------------
    for k = grpnums
+      k
 
       o = odssubset(ods,groups(k));
       o.ssid = [dates(n).id ' ' groups(k).id];
@@ -331,7 +333,7 @@ for n = 1:nds    % for each synoptic time
       ndata = length(o.kt);
 
       disp([blanks(3) groups(k).id ': ' int2str(ndata) ' observations'])
-
+      k
       if ndata>0, % for this group:
 
          % directory for storing plots etc.
@@ -339,10 +341,8 @@ for n = 1:nds    % for each synoptic time
          sdir = [dirname filesep 'G' int2str(k) filesep 'Y' dates(n).yyyy filesep 'M' dates(n).mm];
 
          % compute statistics:
-
-         dstats = makets(groups(k));
+	 dstats = makets(groups(k));
          dstats = makets(dstats,dates(n).dnum);
-
          lev = single(dstats.lev);
          if isempty(lev) % single ts for all lev
             dstats = makets(dstats,1,o,true(size(o.lev)));
@@ -352,29 +352,32 @@ for n = 1:nds    % for each synoptic time
                [y,j] = min(abs(log(lev/o.lev(i))));
                o.lev(i) = lev(j);
             end
+	    
             for j = 1:length(lev)
                dstats = makets(dstats,j,o,(o.lev==lev(j)));
             end
          end
 
-         fname = [expid '.' mfilename '.' yyyymmddhh '.mat'];
+         fname = [expid '.' mfilename '.' yyyymmddhh '.mat']
          save([sdir filesep fname],'dstats')       % save the stats
-         
          % optionally create a coverage plot
          
          makeplot = pcoverg;
+	 makeplot
          if isfield(groups(k),'pcoverg') && ~isempty(groups(k).pcoverg) 
             makeplot = makeplot && groups(k).pcoverg; 
          end
          if makeplot   
+	    o
             obsplot(o,'obs2html')
             fname = [expid '.obsplot.' yyyymmddhh '.' plotfmt];
             print(gcf,['-d' plotfmt],[sdir filesep fname],['-r' plotdpi])  % save the plot
          end
-
+	
       end
 
    end
+   exit
 
 end
 
@@ -482,14 +485,13 @@ end
 %-------------------------------------------------------------------
 
 function ts = makets(varargin)
-
 switch nargin
 
    case 1  % initialize time series structure
 
       group = varargin{1};
 
-      ts.id = group.id;
+      ts.id = group.id
       ts.reg = {'Global','N. Hemisphere','Tropics','S. Hemisphere'};
       if isfield(group,'kt') && ~isempty(group.kt),
          [KTPRS,KTRAD] = dconfig('KTPRS','KTRAD');
@@ -514,6 +516,7 @@ switch nargin
       ts.sigo2 = [];
       ts.Jobkg = [];
       ts.Joana = [];
+
 
    case 2  % extend time series with zeros
 
@@ -577,7 +580,7 @@ switch nargin
          end
          ts.nobs(ir,j,nt) = sum(mskr); 
          ana = (o.qcx==0 & mskr); 
-         psv = ((o.qcx==1 | o.qcx==7) & mskr); 
+         psv = (o.qcx==1 & mskr); 
          ts.nana(ir,j,nt) = sum(ana);
          ts.npsv(ir,j,nt) = sum(psv);
          i = ana|psv;
@@ -587,6 +590,7 @@ switch nargin
             ts.soma (ir,j,nt) = sum( o.oma(i));
             ts.soma2(ir,j,nt) = sum((o.oma(i)).^2);
             ts.somfa(ir,j,nt) = sum( o.omf(i).* o.oma(i) );
+         else
          end
          i = ana;
          if any(i)
@@ -594,8 +598,10 @@ switch nargin
             ts.sigo2(ir,j,nt) = sum((o.sigo(i)).^2);
             ts.Jobkg(ir,j,nt) = sum((o.omf(i)./o.sigo(i)).^2);
             ts.Joana(ir,j,nt) = sum((o.oma(i)./o.sigo(i)).^2);
+         else
          end
       end
+
 
 end
 
@@ -712,7 +718,7 @@ for k=grpnums  % for each group
    % coverage by date
 
    np = 0;
-   for n=1:length(dates)
+   for n=1:nds
       sdir = [gdir filesep 'Y' dates(n).yyyy filesep 'M' dates(n).mm];
       yyyymmddhh = [dates(n).yyyy dates(n).mm dates(n).dd dates(n).hh];
       fpath = [sdir filesep expid '.obsplot.' yyyymmddhh '.' plotfmt];
