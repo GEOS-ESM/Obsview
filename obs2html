@@ -1,0 +1,192 @@
+#!/bin/csh
+# --------------------------------------------------------------
+#
+# csh script for on-line obs monitoring: see -usage below
+#
+# externals:
+#
+# MATLAB    command for invoking MATLAB
+# TBPATH    paths for required MATLAB toolbox directories 
+#
+# 01Apr2005 Dick Dee (dee@gmao.gsfc.nasa.gov)
+#
+# --------------------------------------------------------------
+
+set MATLAB  = '/ford1/local/bin/matlab -nojvm -nosplash'
+set TBPATH  = '/ford1/local/obsview'
+
+# Parse input arguments:
+# ---------------------
+if ( $#argv < 1 ) goto usage
+set html = 0
+set EXPID   = 0
+set BEGDATE = 0
+set ENDDATE = 0
+set PCOVERG = "true"
+set PTSTATS = "true"
+set PSERIES = "true"
+set DIRNAME = "obsmon"
+set GRPFILE = "obsgroups"
+set GRPNUM  = "[]"
+set PLOTFMT = "png"
+set PLOTDPI = "120"
+foreach token ( $argv )
+   if ( "$token" == "-expid" ) then
+        shift
+        if ( $#argv < 1 ) goto usage
+        set EXPID = ( $1 )
+        shift
+   endif
+   if ( "$token" == "-begdate" ) then
+        shift
+        if ( $#argv < 1 ) goto usage
+        set BEGDATE = ( $1 )
+        shift
+   endif
+   if ( "$token" == "-enddate" ) then
+        shift
+        if ( $#argv < 1 ) goto usage
+        set ENDDATE = ( $1 )
+        shift
+   endif
+   if ( "$token" == "-nocoverage" ) then
+        set PCOVERG = "false"
+        shift
+   endif
+   if ( "$token" == "-noseries" ) then
+        set PSERIES = "false"
+        shift
+   endif
+   if ( "$token" == "-nostats" ) then
+        set PTSTATS = "false"
+        shift
+   endif
+   if ( "$token" == "-dirname" ) then
+        shift
+        if ( $#argv < 1 ) goto usage
+        set DIRNAME = ( $1 )
+        shift
+   endif
+   if ( "$token" == "-grpfile" ) then
+        shift
+        if ( $#argv < 1 ) goto usage
+        set GRPFILE = ( $1 )
+        shift
+   endif
+   if ( "$token" == "-grpnum" ) then
+        shift
+        if ( $#argv < 1 ) goto usage
+        set GRPNUM = ( $1 )
+        shift
+   endif
+   if ( "$token" == "-plotfmt" ) then
+        shift
+        if ( $#argv < 1 ) goto usage
+        set PLOTFMT = ( $1 )
+        shift
+   endif
+   if ( "$token" == "-plotdpi" ) then
+        shift
+        if ( $#argv < 1 ) goto usage
+        set PLOTDPI = ( $1 )
+        shift
+   endif
+end
+if ( $EXPID == 0 ) goto usage
+
+if ( -e matlabscript.m ) /bin/rm matlabscript.m
+
+echo diary obs2html.log                           > matlabscript.m
+echo addpath $TBPATH -begin                      >> matlabscript.m
+echo warning off                                 >> matlabscript.m
+echo try                                         >> matlabscript.m
+echo "  options.browser =  false    ;"           >> matlabscript.m
+echo "  options.dirname = '$DIRNAME';"           >> matlabscript.m
+echo "  options.grpfile = '$GRPFILE';"           >> matlabscript.m
+echo "  options.grpnums =  $GRPNUM  ;"           >> matlabscript.m
+echo "  options.pcoverg =  $PCOVERG ;"           >> matlabscript.m
+echo "  options.pseries =  $PSERIES ;"           >> matlabscript.m
+echo "  options.ptstats =  $PTSTATS ;"           >> matlabscript.m
+echo "  options.plotfmt = '$PLOTFMT';"           >> matlabscript.m
+echo "  options.plotdpi = '$PLOTDPI';"           >> matlabscript.m
+if ( !( $BEGDATE == 0 ) ) then
+   echo "  obs2html('$EXPID','$BEGDATE','$ENDDATE',options);">> matlabscript.m
+else
+   echo "  obs2html('$EXPID','$argv',options);"  >> matlabscript.m
+endif
+echo catch                                       >> matlabscript.m
+echo "  str = lasterr; disp(str)"                >> matlabscript.m
+echo end                                         >> matlabscript.m
+echo quit                                        >> matlabscript.m
+
+# Create plots and html using MATLAB:
+# ----------------------------------
+echo "obs2html: Starting MATLAB, please wait..."
+
+nohup $MATLAB < matlabscript.m
+
+# Done.
+# ----
+
+exit 0
+
+# Help section:
+# ------------
+usage:
+cat << ---//---
+
+NAME
+     OBS2HTML - Creates HTML with Observing System Summary Plots.
+
+SYNOPSIS
+     obs2html -expid expid [...] odsfile
+     obs2html -expid expid -begdate yyyymmddhh -enddate yyyymmddhh [...]
+
+DESCRIPTION
+     
+     Creates an HTML document with observing system summary.
+     Must be run in a writeable directory. 
+     Requires MATLAB.
+     
+     Use the first form to process one or more ods files, create
+     data coverage plots, and compute/store various statistics.
+     
+     Use the second form to compute/plot time-averaged statistics
+     over the period specified, to create time series plots, and
+     to create html.
+
+ARGUMENTS
+
+      odsfile             name of ods file containing observations
+     -expid   expid       identification string     
+     -begdate yyyymmddhh  start date for time series and statistics
+     -enddate yyyymmddhh  end date for time series and statistics
+    [-nocoverage]         do not plot data coverage
+    [-noseries]           do not plot time series
+    [-nostats]            do not plot statistics          
+    [-dirname dirname]    directory for storing results
+                         (Default: obsmon)
+    [-grpfile grpfile]    .m file containing data group definitions
+                         (Default: obsgroups)
+    [-grpnum  grpnum ]    Process only group number grpnum
+                         (Default: process all groups)
+    [-plotfmt plotfmt]    graphics format plots
+                         (Default: png)
+    [-plotdpi plotdpi]    graphics resolution, in dots per inch 
+                         (Default: 120)
+
+              
+EXAMPLE
+     obs2html -expid 'myexp' "*.ods"     (note the double quotes)
+     obs2html -expid 'myexp' -begdate 2004080100 -enddate 2004080718
+     netscape obsmon/index.html     
+
+NOTE
+     If the input filename contains wild cards (*)  
+     then it must be surrounded with double quotes.
+     
+Dick Dee (dee@gmao.gsfc.nasa.gov) - Version of 18May2005
+
+---//---
+exit 1
+
