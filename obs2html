@@ -13,8 +13,8 @@
 # --------------------------------------------------------------
 
 set MATLAB  = '/ford1/local/matlab_r2024a/bin/matlab'
-set TBPATH  = '/ford1/local/obsview'
-#set TBPATH = '/home/wjdavis5/obsview'
+#set TBPATH  = '/ford1/local/obsview'
+set TBPATH = '/home/wjdavis5/github_repos/Obsview'
 
 # Parse input arguments:
 # ---------------------

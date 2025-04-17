@@ -58,7 +58,7 @@ end
 % ---------------
 if ~isfield(options,'grpfile'), options.grpfile = 'obsgroups'; end
 if ~isfield(options,'grpnums'), options.grpnums = []         ; end
-if ~isfield(options,'dsynhhs'), options.dsynhhs = [0 6 12 18]; end
+if ~isfield(options,'dsynhhs'), options.dsynhhs = [0 3 6 9 12 15 18 21]; end
 if ~isfield(options,'tsintvl'), options.tsintvl = 1          ; end
 if ~isfield(options,'dirname'), options.dirname = 'obsmon'   ; end
 
@@ -126,6 +126,7 @@ switch narg
       % -------------------------------
       nfs = 0;
       if iscell(odsfiles)       % cell array with file names
+	      disp('iscell')
          for i = 1:length(odsfiles)
             if isodsfile(odsfiles{i})
                nfs = nfs + 1;
@@ -133,13 +134,17 @@ switch narg
             end
          end
       elseif ischar(odsfiles) 
+	      disp('ischar')
          sdir = dir(odsfiles);
          path = stripfn(odsfiles);
          for i = 1:length(sdir)
-            odsfile = [path sdir(i).name];
-	    getodsinfo(odsfile);
+		 length(sdir)
+            odsfile = [path sdir(i).name]
+	    getodsinfo(odsfile)
 	    nfs = nfs +1;
+	    disp('entering makedata')
 	    makedata(odsfile,expid,groups,grpnums,options)
+	    disp('exiting makedata')
             %if isodsfile(odsfile)
 	    %   disp('is ods file')
             %   nfs = nfs + 1;
@@ -243,38 +248,56 @@ function makedata(odsfile,expid,groups,grpnums,options)
 % process an ODS file; produce coverage plots + statistics
 
 dirname = options.dirname;
-dsynhhs = options.dsynhhs;
+dsynhhs = options.dsynhhs
 pcoverg = options.pcoverg;
 plotfmt = options.plotfmt;
 plotdpi = options.plotdpi;
 
 % time info from ods file
 % -----------------------
+disp('entering getodstimeinfo')
 try, [fjday,ljday,lhour,nhour,nobs] = getodstimeinfo(odsfile)
 catch, error([odsfile ' is not a valid ODS file.']), end
-%exit
+disp('exiting getodstimeinfo')
+fjday
+ljday
+lhour
+nhour
+nobs
 % store time information for later use
 % ------------------------------------
+
 n = 0; nh = 0; dates = [];
+disp('entering jday for loop')
+fjday:ljday
 for jday = fjday:ljday
+	disp('level 1 jday for loop')
    for hour = dsynhhs
+      hour
+      disp('level 2 jday for loop')
       nh = nh + 1;
+      disp('entering level2 for loop datenum')
       dnum = datenum(jdaystr(jday))+hour/24;
-      if nobs(nh)>0
-         n = n + 1;
-         dates(n).nobs = nobs(nh);
-         dates(n).jday = jday;
-         dates(n).hour = hour;
-         dates(n).dnum = dnum;
-         dates(n).yyyy = datestr(dnum,'yyyy');
-         dates(n).mm   = datestr(dnum,'mm'  );
-         dates(n).dd   = datestr(dnum,'dd'  );
-         dates(n).hh   = sprintf('%02d',hour);
-         dates(n).id   = [dates(n).dd datestr(dnum,'mmm') dates(n).yyyy ', ' dates(n).hh 'Z'];
+      disp('exiting level2 for loop datenum')
+      if nh<=length(nobs)
+	      if nobs(nh)>0
+	     	      disp('level 3 jday for loop')
+	     	      n = n + 1;
+	     	      dates(n).nobs = nobs(nh);
+	     	      dates(n).jday = jday;
+	     	      dates(n).hour = hour;
+	     	      dates(n).dnum = dnum;
+	     	      dates(n).yyyy = datestr(dnum,'yyyy');
+	     	      dates(n).mm   = datestr(dnum,'mm'  );
+	     	      dates(n).dd   = datestr(dnum,'dd'  );
+	     	      dates(n).hh   = sprintf('%02d',hour)
+	     	      dates(n).id   = [dates(n).dd datestr(dnum,'mmm') dates(n).yyyy ', ' dates(n).hh 'Z'];
+	      end
       end
       if jday==ljday && hour==lhour, break; end
    end
 end
+disp('exiting jday for loop')
 nds = length(dates);
 if nds==0, return; end % nothing to do
 % create directory structure as needed
@@ -303,25 +326,32 @@ disp(['Processing ' odsfile '...']);
 % process the data
 % ----------------
 for n = 1:nds    % for each synoptic time
+   disp('for n = 1:nds')
 
    yyyymmddhh = [dates(n).yyyy dates(n).mm dates(n).dd dates(n).hh];
 
    % get the data from file:
    % ----------------------
+   disp('entering odsload')
+   dates(:)
+   dates(n).hour
    ods = odsload(odsfile,dates(n).jday,dates(n).hour);
+   disp('exiting odsload')
    ods.filename = odsfile;
 
    disp([dates(n).id ': ' int2str(dates(n).nobs) ' observations']);
 
    % set qcx for large sigo, and other clean-up:
    % ------------------------------------------
+   disp('entering odsclean')
    ods = odsclean(ods);
+   disp('exiting odsclean')
    % subset the data for each group:
    % ------------------------------
    for k = grpnums
-      k
-
+      disp('entering odssubset')
       o = odssubset(ods,groups(k));
+      disp('exiting odssubset')
       o.ssid = [dates(n).id ' ' groups(k).id];
       if isfield(groups(k),'lat'), o.sslat = groups(k).lat; end
       if isfield(groups(k),'lon'), o.sslon = groups(k).lon; end
@@ -330,20 +360,25 @@ for n = 1:nds    % for each synoptic time
       if isfield(groups(k),'kx' ), o.sskx  = groups(k).kx;  end
       if isfield(groups(k),'qcx'), o.ssqcx = groups(k).qcx; end
       if isfield(groups(k),'qch'), o.ssqch = groups(k).qch; end
-      ndata = length(o.kt);
+      ndata = length(o.kt)
 
       disp([blanks(3) groups(k).id ': ' int2str(ndata) ' observations'])
-      k
       if ndata>0, % for this group:
+	      disp('inside ndata check')
 
          % directory for storing plots etc.
 
          sdir = [dirname filesep 'G' int2str(k) filesep 'Y' dates(n).yyyy filesep 'M' dates(n).mm];
 
          % compute statistics:
+	 disp('entering makets 1 arg')
 	 dstats = makets(groups(k));
+	 disp('exiting makets 1 arg')
+	 disp('entering makets 2 arg')
          dstats = makets(dstats,dates(n).dnum);
+	 disp('exiting makets 2 arg')
          lev = single(dstats.lev);
+	 disp('entering makets 4 arg if loop')
          if isempty(lev) % single ts for all lev
             dstats = makets(dstats,1,o,true(size(o.lev)));
          else             % one ts for each lev
@@ -357,6 +392,7 @@ for n = 1:nds    % for each synoptic time
                dstats = makets(dstats,j,o,(o.lev==lev(j)));
             end
          end
+	 disp('exiting makets 4 arg if loop')
 
          fname = [expid '.' mfilename '.' yyyymmddhh '.mat']
          save([sdir filesep fname],'dstats')       % save the stats
@@ -368,8 +404,11 @@ for n = 1:nds    % for each synoptic time
             makeplot = makeplot && groups(k).pcoverg; 
          end
          if makeplot   
-	    o
+	    disp('entering obsplot')
             obsplot(o,'obs2html')
+	    disp('exiting obsplot')
+	    nds
+	    n
             fname = [expid '.obsplot.' yyyymmddhh '.' plotfmt];
             print(gcf,['-d' plotfmt],[sdir filesep fname],['-r' plotdpi])  % save the plot
          end
@@ -377,7 +416,7 @@ for n = 1:nds    % for each synoptic time
       end
 
    end
-   exit
+   %exit
 
 end
 

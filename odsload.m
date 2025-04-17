@@ -46,7 +46,8 @@ if nargin>1,            % additional arguments. if any
 else
    nargs = 0;
 end
-
+nargs
+args
 % first check the last argument (if any):
 
 if nargs>0 && iscell(args{nargs}),   % selected attributes only
@@ -62,7 +63,9 @@ if nargs>0 && iscell(args{nargs}),   % selected attributes only
 else                                % all attributes
    attrs = {'kt','kx','ks','lon','lat','lev','time',...
             'obs','omf','oma','xm','qcexcl','qchist','xvec'};
-   ods = getodsinfo(odsfile);     % complete header info
+   disp('enter getodsinfo from odsload')
+   ods = getodsinfo(odsfile)     % complete header info
+   disp('exiting getodsinfo from odsload')
    if ~(isodsstruct(ods)&&str2num(ods.version(1))>=2),
       error([odsfile ': Not an ODS Version 2 file.'])
    end
@@ -79,13 +82,15 @@ end
 
 % any remaining arguments specify synoptic times:
 
-nsonfile = 1 + nhour*(ljday - fjday + lhour/24);
-is = [];
+nsonfile = 1 + nhour*(ljday - fjday + lhour/24)
+is = []
+disp('switch nargs in odsload')
 switch nargs
 
 case 0,   % load entire file
 
    is = 1:nsonfile;
+   disp('nargs = 0')
 
 case 1,   % data for one or more entire days
 
@@ -93,17 +98,21 @@ case 1,   % data for one or more entire days
    is = repmat(nhour*(jday(:)-fjday),[1 nhour])';
    is = is(:) + repmat(1:nhour,[1 length(jday)])';
    is(is>nsonfile) = [];
+   disp('nargs = 1')
 
 case 2,   % data for one or more synoptic hours
 
-   jday = args{1}; hour = args{2};
+   jday = args{1} 
+   hour = args{2}
    if length(jday)>1&&length(hour)>1&&length(jday)~=length(hour),
       error('Invalid time specification.')
    end
-   is = 1 + nhour*((jday(:)-fjday) + hour(:)/24);
-   is(is>nsonfile) = [];
+   is = 1 + nhour*((jday(:)-fjday) + hour(:)/24)
+   is(is>nsonfile) = []
+   disp('nargs = 2')
 
 end
+is
 if isempty(is), return, end
 
 if any(is<1|is>nsonfile)||~isequal(is,round(is)),
@@ -117,9 +126,14 @@ isbeg = is(1+[0 i]);
 isend = is([i length(is)]);
 
 % get the raw data from file:
+disp('entering getdata in odsload')
 ods = getdata(ods,odsfile,isbeg,isend,attrs);
+disp('exiting getdata in odsload')
 % scale and offset:
+disp('entering convert in odsload')
 ods = convert(ods,attrs);
+disp('entering convert in odsload')
+ods
 %--------------------------------------------------------------------
 
 function ods = getdata(ods,odsfile,isbeg,isend,attrs)
