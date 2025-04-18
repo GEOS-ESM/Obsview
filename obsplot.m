@@ -34,7 +34,7 @@ if ~isempty(hGui)&&strcmp(get(findobj(hGui,'Tag','qcxclear'),'Checked'),'on'),
     ods.ssqcx = 0;
 end
 
-nall = length(ods.kt)
+nall = length(ods.kt);
 if nall==0, return, end   % must have data to plot.
 
 % decide whether to create a new figure window or plot in an existing window
