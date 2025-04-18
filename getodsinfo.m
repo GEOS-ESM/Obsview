@@ -43,11 +43,13 @@ function ods = getinfo(ods,SD_id)
 % - various character arrays
 
 % get file info:
+
 varids=netcdf.inqVarIDs(SD_id);
 ndatasets=length(varids);
 finfo=ncinfo(ods.filename);
 nglobal_attr=length(finfo.Attributes);
 attrNames = {finfo.Attributes.Name};
+
 % get all global attributes:
 
 for attr_idx = 1:nglobal_attr,
@@ -98,9 +100,6 @@ for name = {'kt_names','kt_units','kx_names','kx_meta','qcx_names'},
 
     if all(isfinite(dimsizes)),
 
-       start  = zeros(size(dimsizes));
-       stride = ones(size(dimsizes));
-       edge   = dimsizes;
        data = netcdf.getVar(SD_id,idx);
        ods.(dset_name) = data;
 
