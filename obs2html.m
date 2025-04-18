@@ -41,6 +41,7 @@ function obs2html(varargin)
 %     options.browser   [logical]  open browser to view html
 %
 %  Last updated 20Jul05 by Dick Dee (dee@gmao.gsfc.nasa.gov)
+%  Last updated 15Apr25 by Wesley Davis (wjdavis5@ndc.nasa.gov)
 
 if nargin==0, help(mfilename); return; end
 
@@ -133,7 +134,6 @@ switch narg
             end
          end
       elseif ischar(odsfiles) 
-	      disp('ischar')
          sdir = dir(odsfiles);
          path = stripfn(odsfiles);
          for i = 1:length(sdir)
@@ -355,7 +355,7 @@ for n = 1:nds    % for each synoptic time
             end
          end
 
-         fname = [expid '.' mfilename '.' yyyymmddhh '.mat']
+         fname = [expid '.' mfilename '.' yyyymmddhh '.mat'];
          save([sdir filesep fname],'dstats')       % save the stats
          % optionally create a coverage plot
          
@@ -365,11 +365,7 @@ for n = 1:nds    % for each synoptic time
             makeplot = makeplot && groups(k).pcoverg; 
          end
          if makeplot   
-	    disp('entering obsplot')
             obsplot(o,'obs2html')
-	    disp('exiting obsplot')
-	    nds
-	    n
             fname = [expid '.obsplot.' yyyymmddhh '.' plotfmt];
             print(gcf,['-d' plotfmt],[sdir filesep fname],['-r' plotdpi])  % save the plot
          end
