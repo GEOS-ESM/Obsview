@@ -126,7 +126,6 @@ switch narg
       % -------------------------------
       nfs = 0;
       if iscell(odsfiles)       % cell array with file names
-	      disp('iscell')
          for i = 1:length(odsfiles)
             if isodsfile(odsfiles{i})
                nfs = nfs + 1;
@@ -138,18 +137,10 @@ switch narg
          sdir = dir(odsfiles);
          path = stripfn(odsfiles);
          for i = 1:length(sdir)
-		 length(sdir)
-            odsfile = [path sdir(i).name]
+	    odsfile = [path sdir(i).name];
 	    getodsinfo(odsfile)
 	    nfs = nfs +1;
-	    disp('entering makedata')
 	    makedata(odsfile,expid,groups,grpnums,options)
-	    disp('exiting makedata')
-            %if isodsfile(odsfile)
-	    %   disp('is ods file')
-            %   nfs = nfs + 1;
-            %   makedata(odsfile,expid,groups,grpnums,options)
-            %end
          end
       else
          help(mfilename)
@@ -255,33 +246,18 @@ plotdpi = options.plotdpi;
 
 % time info from ods file
 % -----------------------
-disp('entering getodstimeinfo')
 try, [fjday,ljday,lhour,nhour,nobs] = getodstimeinfo(odsfile)
 catch, error([odsfile ' is not a valid ODS file.']), end
-disp('exiting getodstimeinfo')
-fjday
-ljday
-lhour
-nhour
-nobs
 % store time information for later use
 % ------------------------------------
 
 n = 0; nh = 0; dates = [];
-disp('entering jday for loop')
-fjday:ljday
 for jday = fjday:ljday
-	disp('level 1 jday for loop')
    for hour = dsynhhs
-      hour
-      disp('level 2 jday for loop')
       nh = nh + 1;
-      disp('entering level2 for loop datenum')
       dnum = datenum(jdaystr(jday))+hour/24;
-      disp('exiting level2 for loop datenum')
       if nh<=length(nobs)
 	      if nobs(nh)>0
-	     	      disp('level 3 jday for loop')
 	     	      n = n + 1;
 	     	      dates(n).nobs = nobs(nh);
 	     	      dates(n).jday = jday;
@@ -297,7 +273,6 @@ for jday = fjday:ljday
       if jday==ljday && hour==lhour, break; end
    end
 end
-disp('exiting jday for loop')
 nds = length(dates);
 if nds==0, return; end % nothing to do
 % create directory structure as needed
@@ -332,26 +307,18 @@ for n = 1:nds    % for each synoptic time
 
    % get the data from file:
    % ----------------------
-   disp('entering odsload')
-   dates(:)
-   dates(n).hour
    ods = odsload(odsfile,dates(n).jday,dates(n).hour);
-   disp('exiting odsload')
    ods.filename = odsfile;
 
    disp([dates(n).id ': ' int2str(dates(n).nobs) ' observations']);
 
    % set qcx for large sigo, and other clean-up:
    % ------------------------------------------
-   disp('entering odsclean')
    ods = odsclean(ods);
-   disp('exiting odsclean')
    % subset the data for each group:
    % ------------------------------
    for k = grpnums
-      disp('entering odssubset')
       o = odssubset(ods,groups(k));
-      disp('exiting odssubset')
       o.ssid = [dates(n).id ' ' groups(k).id];
       if isfield(groups(k),'lat'), o.sslat = groups(k).lat; end
       if isfield(groups(k),'lon'), o.sslon = groups(k).lon; end
@@ -364,19 +331,14 @@ for n = 1:nds    % for each synoptic time
 
       disp([blanks(3) groups(k).id ': ' int2str(ndata) ' observations'])
       if ndata>0, % for this group:
-	      disp('inside ndata check')
 
          % directory for storing plots etc.
 
          sdir = [dirname filesep 'G' int2str(k) filesep 'Y' dates(n).yyyy filesep 'M' dates(n).mm];
 
          % compute statistics:
-	 disp('entering makets 1 arg')
 	 dstats = makets(groups(k));
-	 disp('exiting makets 1 arg')
-	 disp('entering makets 2 arg')
          dstats = makets(dstats,dates(n).dnum);
-	 disp('exiting makets 2 arg')
          lev = single(dstats.lev);
 	 disp('entering makets 4 arg if loop')
          if isempty(lev) % single ts for all lev
@@ -392,7 +354,6 @@ for n = 1:nds    % for each synoptic time
                dstats = makets(dstats,j,o,(o.lev==lev(j)));
             end
          end
-	 disp('exiting makets 4 arg if loop')
 
          fname = [expid '.' mfilename '.' yyyymmddhh '.mat']
          save([sdir filesep fname],'dstats')       % save the stats
@@ -416,7 +377,6 @@ for n = 1:nds    % for each synoptic time
       end
 
    end
-   %exit
 
 end
 
