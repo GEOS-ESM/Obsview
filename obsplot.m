@@ -8,6 +8,7 @@ function obsplot(arg,varargin)
 % 25Oct2001 Dick Dee (dee@gmao.gsfc.nasa.gov)
 % 23Apr2004 Dick Dee - ECMWF version
 % 18Nov2004 Dick Dee - GSI version
+% 15Apr2025 Wesley Davis (wjdavis5@ndc.nasa.gov) matlab2024a update
 
 if ischar(arg), % must be a callback
     feval(arg,varargin{:})      % simply pass to the callback routine..
@@ -33,7 +34,7 @@ if ~isempty(hGui)&&strcmp(get(findobj(hGui,'Tag','qcxclear'),'Checked'),'on'),
     ods.ssqcx = 0;
 end
 
-nall = length(ods.kt);
+nall = length(ods.kt)
 if nall==0, return, end   % must have data to plot.
 
 % decide whether to create a new figure window or plot in an existing window

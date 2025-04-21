@@ -7,7 +7,7 @@ function ods = odsclean(ods)
 % replace empty attributes by NaNs:
 % --------------------------------
 nans = NaN*ones(size(ods.kt));
-fields = fieldnames(ods);
+fields = fieldnames(ods)
 for j = 1:length(fields),
     if isempty(ods.(fields{j})), ods.(fields{j}) = nans; end
 end

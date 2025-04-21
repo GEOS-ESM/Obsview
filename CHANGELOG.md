@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Changed how ods files (netcdf version 5) were interacted with from the old hdfsd utility to the
 new netcdf one.
 ### Fixed
+The default settings only read 0 6 12 18
+They now read every 3 hours
 
 ### Removed
 

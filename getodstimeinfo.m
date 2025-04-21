@@ -55,8 +55,10 @@ data = netcdf.getAtt(SD_id,idx,'latest_synoptic_hour');
 %if status==-1, warning(['Can''t read ' attr_name '.']); end
 lhour = double(data);
 if nargout==5,
+    disp('entering getstidx')
     [idx,nob] = getstidx(SD_id);
-    varargout(1) = {nob};
+    disp('exiting getstidx')
+    varargout(1) = {nob}
 
 end
 
@@ -86,7 +88,13 @@ for name = {'syn_beg','syn_len'},
    %idx = hdfsd('nametoindex',SD_id,dset_name);
    %sds_id = hdfsd('select',SD_id, idx);
    %[dname,rank,dimsizes,data_type,nattrs,status] = hdfsd('getinfo',sds_id);
-   [dname,data_type,dimsizes,nattrs] = netcdf.inqVar(SD_id,idx);
+   [dname,data_type,dimids,nattrs] = netcdf.inqVar(SD_id,idx);
+   [dimname2, dimlen2] = netcdf.inqDim(SD_id,dimids(2));
+   [dimname1, dimlen1] = netcdf.inqDim(SD_id,dimids(1));
+   dimsizes = [dimlen2 dimlen1];
+
+   % it's not dimsizes it's dimids
+   % need to pull dimids to get dimsizes
 %   if status==-1,
 %        hdfsd('end',SD_id);
 %        error(['Can''t read ' dset_name '.'])
@@ -97,7 +105,8 @@ for name = {'syn_beg','syn_len'},
       start  = [0 0];
       stride = [1 1];
       edge   = dimsizes;
-      data = netcdf.getVar(SD_id,idx,start,stride,edge);
+      dname
+      data = netcdf.getVar(SD_id,idx); %,start,stride,edge)
       %[data,status] = hdfsd('readdata',sds_id,start,stride,edge);
       %if status==-1,
       %   hdfsd('end',SD_id);
@@ -118,6 +127,8 @@ end
 idx  = collect(:,1); % beginning indices for each synoptic time
 nobs = collect(:,2); % number of obs for each synoptic time
 n = sum(nobs);       % total number of obs on file
+idx;
 i = find(idx<=n);    % remove out-of-bound indices:
 idx  = idx(i);
-nobs = nobs(i);
+%nobs = sum(nobs(i))
+nobs = nobs(i)
