@@ -111,7 +111,7 @@ echo "  options.ptstats =  $PTSTATS ;"           >> matlabscript.m
 echo "  options.plotfmt = '$PLOTFMT';"           >> matlabscript.m
 echo "  options.plotdpi = '$PLOTDPI';"           >> matlabscript.m
 if ( $ods_type == 'aer' ) then
-  echo "  options.dsynhhs = [ 0 3 6 9 12 15 18 ];" >> matlabscript.m
+  echo "  options.dsynhhs = [ 0 3 6 9 12 15 18 21 ];" >> matlabscript.m
 else
   echo "  options.dsynhhs = [ 0 6 12 18 ];"        >> matlabscript.m
 endif
