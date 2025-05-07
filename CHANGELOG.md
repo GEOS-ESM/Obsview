@@ -16,6 +16,9 @@ new netcdf one.
 The default settings only read 0 6 12 18
 They now read every 3 hours
 
+Default settings were failing for ozone/radiance.
+Added a check to determine the types of obs being processed based up on the current directory and changed the options.dsynhhs variables in obs2html accordingly.
+
 ### Removed
 
 ### Deprecated
