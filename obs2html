@@ -12,6 +12,7 @@
 # 15Apr2025 Wesley Davis (wesley.j.davis@nasa.gov)
 # --------------------------------------------------------------
 
+set ods_type = `pwd | awk -F/ '{print $NF}'`
 set MATLAB  = '/ford1/local/matlab_r2024a/bin/matlab'
 #set TBPATH  = '/ford1/local/obsview'
 set TBPATH = '/home/wjdavis5/github_repos/Obsview'
@@ -109,6 +110,12 @@ echo "  options.pseries =  $PSERIES ;"           >> matlabscript.m
 echo "  options.ptstats =  $PTSTATS ;"           >> matlabscript.m
 echo "  options.plotfmt = '$PLOTFMT';"           >> matlabscript.m
 echo "  options.plotdpi = '$PLOTDPI';"           >> matlabscript.m
+if ( $ods_type == 'aer' ) then
+  echo "  options.dsynhhs = [ 0 3 6 9 12 15 18 21 ];" >> matlabscript.m
+else
+  echo "  options.dsynhhs = [ 0 6 12 18 ];"        >> matlabscript.m
+endif
+
 if ( !( $BEGDATE == 0 ) ) then
    echo "  obs2html('$EXPID','$BEGDATE','$ENDDATE',options);">> matlabscript.m
 else
@@ -123,7 +130,6 @@ echo quit                                        >> matlabscript.m
 # Create plots and html using MATLAB:
 # ----------------------------------
 echo "obs2html: Starting MATLAB, please wait..."
-
 nohup $MATLAB < matlabscript.m
 
 
