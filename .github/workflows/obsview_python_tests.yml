@@ -1,0 +1,19 @@
+name: Python Tests
+on:
+  push:
+    branches: [main, feature/rtodling_copilot_python]
+  pull_request:
+    branches: [main]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.8', '3.9', '3.10', '3.11']
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    - run: python -m pip install --upgrade pip && pip install -e python/[dev]
+    - run: cd python && pytest tests/ -v --cov=obsview
