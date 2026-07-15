@@ -13,9 +13,9 @@
 # --------------------------------------------------------------
 
 set ods_type = `pwd | awk -F/ '{print $NF}'`
-set MATLAB  = '/ford1/local/matlab_r2024a/bin/matlab'
+set MATLAB  = '/Applications/MATLAB_R2022a.app'
 #set TBPATH  = '/ford1/local/obsview'
-set TBPATH = '/home/wjdavis5/github_repos/Obsview'
+set TBPATH = '~/Desktop/Obsview/Obsview/matlab'
 
 # Parse input arguments:
 # ---------------------

@@ -1,3 +1,7 @@
+#Configuration file
+#Used to store observation types to their respective variable names
+
+
 """Lookup tables that used to live as if/elif chains inside main().
 
 Centralizing these here means adding a new observation type is a data
@@ -8,6 +12,7 @@ branch in three different places).
 # Default pressure binning range: [bottom, top] in hPa.
 DEFAULT_LEVLIM = [1000.0, 0.1]
 
+#Observation type to its respective variable name
 # obtype -> varname (used when --var is left as 'auto')
 OBTYPE_TO_VARNAME = {
     "mls55_aura": "ozoneProfile",
@@ -54,7 +59,7 @@ SCALE_MAP = {
 }
 DEFAULT_SCALEBY = "null"
 
-
+##TODO: Find out why a class is needed for observation types, variables, and scale
 class RunConfig:
     """Resolved configuration for a single run, derived from CLI args."""
 
@@ -82,7 +87,7 @@ class RunConfig:
             f"scaleby={self.scaleby!r})"
         )
 
-
+#Create an object of the RunConfig class
 def resolve(obtype, var, scale):
     """Build a RunConfig from raw CLI argument values."""
     return RunConfig(obtype, var, scale)

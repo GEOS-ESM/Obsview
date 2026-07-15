@@ -1,3 +1,5 @@
+#Miscellaneous functions
+
 """Small, generic helpers shared across the package."""
 import numpy as np
 

@@ -1,3 +1,6 @@
+#Module for creating the 4 panel plot (called the 'Statistics plot' in Obsview)
+#This plot will be a monthly averaged plot in the future when this program can read multiple files
+
 """Individual subplot panels shared by every stats-plotting entry point.
 
 Each function draws into the *current* matplotlib axes (via plt.subplot,
@@ -6,7 +9,7 @@ called by the caller beforehand) - they don't create figures themselves.
 import numpy as np
 import matplotlib.pyplot as plt
 
-
+#Create an x-axis label for specific variable names
 def _xlabel_for(varname):
     if varname == "ozoneProfile":
         return "Ozone Value (mol mol$^{-1}$)"
@@ -16,7 +19,7 @@ def _xlabel_for(varname):
         return "Bending Angle"
     return None
 
-
+#Function to create the residual stats panel
 def show_resstats_panel(
     varname, mean_ombg, mean_oman, rms_ombg, rms_oman, bin_centers, bin_heights, labels, radiance
 ):
@@ -59,7 +62,7 @@ def show_resstats_panel(
     plt.tight_layout()
     plt.legend()
 
-
+#Function to create the jo panel
 def show_jo_panel(varname, mean_job, mean_joa, bin_centers, bin_heights, labels, radiance):
     bar_width = bin_heights * 0.4
     offsets = [-1.5, -0.5, 0.5, 1.5]
@@ -92,7 +95,7 @@ def show_jo_panel(varname, mean_job, mean_joa, bin_centers, bin_heights, labels,
     plt.tight_layout()
     plt.legend()
 
-
+#Function to make the sigo panel
 def show_sigo_panel(varname, mean_sigo, mean_esigo, mean_esigb, bin_centers, bin_heights, labels, radiance):
     bar_width = bin_heights * 0.4
     offsets = [-1.5, -0.5, 0.5, 1.5]
@@ -131,7 +134,7 @@ def show_sigo_panel(varname, mean_sigo, mean_esigo, mean_esigb, bin_centers, bin
     plt.ticklabel_format(axis="x", style="sci", scilimits=(0, 10))
     plt.legend()
 
-
+#Function to create the number of observations panel
 def show_nobs_panel(varname, sum_nobs, sum_nonobs, bin_centers, bin_heights, usrqc, show2, radiance):
     bar_width = bin_heights * 0.4
     offsets = [-0.5, -0.25, 0.5, 1.5]
@@ -166,7 +169,7 @@ def show_nobs_panel(varname, sum_nobs, sum_nonobs, bin_centers, bin_heights, usr
     plt.tight_layout()
     plt.legend()
 
-
+#Function to create the number of observations panel(only when comparing JEDI and GSI)
 def comp_nobs_panel(varname, jsum_nobs, gsum_nobs, bin_centers, bin_heights, usrqc, radiance):
     bar_width = bin_heights * 0.4
     offsets = [-1.5, -0.5, 0.5, 1.5]

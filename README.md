@@ -1,4 +1,4 @@
-# obsview
+# obsview_python
 
 Refactored, modular version of `ioda_prs_binned.py`. Reads ODS (`.ods`)
 and IODA/JEDI (`.nc4`) diagnostic files and produces 4-panel statistics
@@ -19,10 +19,6 @@ All CLI flags are unchanged from the original script (`--scale`,
 `--common`, `--bias`, `--fig`). Run `python run.py --help` for the full
 list.
 
-`run.py` is a thin wrapper (`from obsview.main import main; main()`).
-It exists because the package uses relative imports internally, so
-`obsview/main.py` can't be executed directly — either go through
-`run.py` or use `python -m obsview.main`.
 
 ## Structure
 
