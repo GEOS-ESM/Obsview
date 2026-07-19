@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 from . import cli
 from . import config
-from .io.readers import ioda_from_tarball, is_ods
+from .io.readers import ioda_from_tarball, is_ods, is_ioda
 from .stats.ods_stats import ods_pressure_binned, ods_channel
 from .stats.ioda_stats import ioda_pressure_binned, ioda_channel
 from .stats.compare_stats import jediXgsi_channel, jediXgsi_pressure_binned
@@ -15,6 +15,9 @@ from .stats.compare_stats import jediXgsi_channel, jediXgsi_pressure_binned
 #Print meta data of the file: observation type, variable name, data type (kt), number of bins, if there is scaling factor 
 #Check if file is an ODS or IODA file
 #Choose whether to show plot or save plot to a file
+
+#def print_meta():
+
 def run(args)-> None:
     cfg = config.resolve(args.obtype, args.var, args.scale)
 
@@ -34,7 +37,7 @@ def run(args)-> None:
                 args.satid, cfg.kt, args.qc,
             )
 #If not ODS, it must be IODA file            
-    else:
+    elif is_ioda(args.filename):
         #Stores file contents from either tarball or IODA file into variable
         nc = ioda_from_tarball(args.tarname, args.filename)
         #Check if user wants to make comparison plots
@@ -56,6 +59,9 @@ def run(args)-> None:
                 ioda_channel(nc, cfg.varname, cfg.levlim, args.nbins, cfg.scaleby, args.satid, args.qc)
             else: #Everything else uses binned pressure levels
                 ioda_pressure_binned(nc, cfg.varname, cfg.levlim, args.nbins, cfg.scaleby, args.satid, args.qc)
+    else:
+        print(f"The provided file is neither an ODS or IODA file, please try again...\n")
+
     #Check if user wants to save the figure to a file
     if args.fig == "none":
         plt.show()

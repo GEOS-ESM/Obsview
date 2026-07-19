@@ -59,7 +59,7 @@ SCALE_MAP = {
 }
 DEFAULT_SCALEBY = "null"
 
-##TODO: Find out why a class is needed for observation types, variables, and scale
+#Class used to resolve command line arguments
 class RunConfig:
     """Resolved configuration for a single run, derived from CLI args."""
 

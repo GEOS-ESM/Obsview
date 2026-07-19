@@ -59,10 +59,11 @@ def ods_pressure_binned(filename, varname, levlim, nbins, scaleby, satid, kt, us
     oman_valid = oman[valid_mask]
     amb_valid = amb[valid_mask]
     sigo_valid = sigo[valid_mask]
-
+    pressure_valid = pressure[valid_mask]
+    
     if scaleby != "null":
         scale_valid = scale[valid_mask]
-    pressure_valid = pressure[valid_mask]
+    
 
     #Creates bins in log space(how pressure is leveled)
     bins = np.logspace(np.log10(levlim[1]), np.log10(levlim[0]), num=nbins)

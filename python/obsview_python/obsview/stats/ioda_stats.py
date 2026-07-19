@@ -1,4 +1,5 @@
 #Module for creating binned statistics and plots for IODA files
+#TODO: fix Runtime warning: mean of empty slice from line 225-232
 """Compute (and plot) statistics from IODA/JEDI .nc4 files."""
 import numpy as np
 import matplotlib.pyplot as plt

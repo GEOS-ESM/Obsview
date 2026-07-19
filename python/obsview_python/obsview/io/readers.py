@@ -1,6 +1,5 @@
 #Module containing functions that read IODA files and check if a file is an ODS file
 #TODO: add a function to read an ODS file in here
-#TODO: add a function to check if the file is an IODA file
 
 """File-opening logic for the two supported input formats.
 
@@ -56,3 +55,6 @@ def file_extension(filename):
 def is_ods(filename):
     return file_extension(filename) == "ods"
 
+#Checks if the file extension ends in .nc4 or .tar
+def is_ioda(filename):
+    return file_extension(filename) == "nc4" or "tar"
