@@ -1,10 +1,10 @@
+import time
+from typing import Dict, Optional
+from dataclasses import dataclass, fields, field, replace
+
 from netCDF4 import Dataset
 import numpy as np
 import matplotlib.pyplot as plt
-from dataclasses import dataclass, fields, field, replace
-from typing import Optional
-
-filename = "python/x0050.diag_amsua_n19.20230801_00z.ods"
 
 
 ###################################
@@ -36,20 +36,21 @@ class ObservationData:
     # lat: Optional[np.ndarray] #optional for now
     # lon: Optional[np.ndarray]
     # time: Optional[np.ndarray]
-    # lev_type: Optional[str] #'pressure' or 'channel'
+    
     #error, also add other relevant variables used in calculations
     #scale
     kt: np.ndarray
     sid: np.ndarray
     #calculated variables
     amb: np.ndarray
-    job: np.ndarray
-    joa: np.ndarray
-    esigo: np.ndarray
-    esigb: np.ndarray
+    job: Optional[np.ndarray] = None
+    joa: Optional[np.ndarray] = None
+    esigo: Optional[np.ndarray] = None
+    esigb: Optional[np.ndarray] = None
     #metadata: Metadata
-    all_lev: np.ndarray
-
+    lev_type: Optional[str] = None #'pressure' or 'channel'
+    all_lev: Optional[np.ndarray] = None
+    fill_values: Optional[dict] = None
 
 #odsreader
 @dataclass
@@ -87,17 +88,8 @@ class ODSReader:
     def _calc_variables(self, raw: dict) -> dict:
         #Calculate
         amb = raw["omb"] - raw["oma"]
-        job = raw["omb"]**2/raw["sigo"]**2
-        joa = raw["oma"]**2/raw["sigo"]**2
-        esigo = raw["omb"]*raw["oma"]
-        esigb = raw["omb"]*amb
-
         #Append
         raw["amb"] = amb
-        raw["job"] = job
-        raw["joa"] = joa
-        raw["esigo"] = esigo
-        raw["esigb"] = esigb
         return raw
 
     #Flatten data, return ObservationData object
@@ -136,9 +128,86 @@ class ODSReader:
 #TODO: add logic that populates lev_type with either "pressure" or "channel"
 
 #iodareader.py
-#TODO: Create IODAReader class
+class IODAReader:
+    
+    #Open NetCDF file
+    def _open_file(self,filename: str) -> Dataset:
+        nc = Dataset(filename, "r")
+        nc.set_auto_mask(False)
+        return nc
+    #Load data and flatten incoming arrays
+    def _load_data(self, nc: Dataset) -> dict: 
+        varname = "brightnessTemperature"     #Hardcoded for now, add function that takes user input to select variable name
+        n_locations = np.size(nc.variables["Location"][:])
+        raw = {
+        "obs": nc.groups["ObsValue"].variables[varname][:].flatten(),
+        "omb": nc.groups["ombg"].variables[varname][:].flatten(),
+        "oma": nc.groups["oman"].variables[varname][:].flatten(),
+        "sigo": nc.groups["EffectiveError0"].variables[varname][:].flatten(),
+        "qc": nc.groups["EffectiveQC0"].variables[varname][:].flatten(),
+        "all_lev": nc.variables["Channel"][:].flatten(),     #Hardcoded for now, change later to accept logic to determine what type of level variable(others include pressure and wavelength)
+        "sid": 326,     #SID for Amsua Metop-B satellite, change later using config/rc file
+        "kt": 40,       #Hardcoded for now, change later using config file
+        "lev": np.tile(nc.variables["Channel"][:],n_locations)
+        }
+        return raw
+        
+    def _calc_variables(self, raw: dict) -> dict:
+        #Calculate
+        amb = raw["omb"] - raw["oma"]
 
+        #Append
+        raw["amb"] = amb
+        return raw
+    
+    def _load_fill_values(self, nc: Dataset) -> dict:
+        varname = "brightnessTemperature"  # keep consistent with _load_data
 
+        # Map logical name -> the actual NetCDF variable object it was read from.
+        # (Must mirror the sources used in _load_data.)
+        var_sources = {
+            "omb":  nc.groups["ombg"].variables[varname],
+            "oma":  nc.groups["oman"].variables[varname],
+            "sigo": nc.groups["EffectiveError0"].variables[varname],
+            "qc":   nc.groups["EffectiveQC0"].variables[varname],
+            "lev":  nc.variables["Channel"],
+        }
+
+        fill_values = {}
+        for name, var in var_sources.items():
+            if "_FillValue" in var.ncattrs():
+                fill_values[name] = var.getncattr("_FillValue")
+            else:
+                fill_values[name] = None  # no declared fill value for this variable
+
+        return fill_values   
+    
+    def _create_data_object(self, raw: dict, fill_values: dict) -> ObservationData:
+        obj = ObservationData(
+            obs = raw["obs"],
+            omb = raw["omb"],
+            oma = raw["oma"],
+            sigo = raw["sigo"],
+            qc = raw["qc"],
+            lev = raw["lev"],
+            kt = raw["kt"],
+            sid = raw["sid"],
+            amb = raw["amb"],
+            all_lev= raw["all_lev"],
+            fill_values = fill_values
+        )
+        return obj
+        ...
+
+    
+    def read(self, filename: str) -> ObservationData:
+        nc = self._open_file(filename)
+        raw = self._load_data(nc)
+        raw = self._calc_variables(raw)
+        fill_values = self._load_fill_values(nc)
+        obj = self._create_data_object(raw, fill_values)
+        return obj
+#TODO: add logic that populates lev_type with either "pressure" or "channel"
 
 
 
@@ -152,12 +221,14 @@ class ODSReader:
 ###############################
 
 #masking.py
+
+#This should be for data that is valid, not necessarily passes qc
 def valid_mask(data: ObservationData) -> np.ndarray: 
     missing_val = 1.0e15
     valid_mask = (
-        (data.qc == 0)              #Should be changed later to take user input
+        (data.qc == 0)              #Should be changed later for missing value
         #& (data.sid == -999)        #Ditto
-        & (data.kt == 40)           #Ditto
+        & (data.kt == 40)           #This should be omitted later
         & (data.lev < missing_val)
         & (data.omb < missing_val)
         & (data.oma < missing_val)
@@ -165,14 +236,37 @@ def valid_mask(data: ObservationData) -> np.ndarray:
     )
     return valid_mask
 
+#This mask keeps data that isn't a missing value(same as valid_mask() but for data that contains specific fill values)
+def fill_val_mask(data:ObservationData) -> np.ndarray:
+    valid_mask = (
+        (data.qc < np.abs(data.fill_values['qc']))                             
+        & (data.omb < np.abs(data.fill_values['omb']))
+        & (data.oma < np.abs(data.fill_values['oma']))
+        & (data.sigo < np.abs(data.fill_values['sigo']))
+        & (data.lev < np.abs(data.fill_values['lev']))
 
+    )    
+    return valid_mask
+
+def qc_pass_mask(data: ObservationData) -> np.ndarray:
+    qc_pass = (data.qc == 0)
+    return qc_pass
+   
+
+def qc_fail_mask(data: ObservationData) -> np.ndarray:
+    qc_fail = (data.qc > 0)
+    return qc_fail
+    
 
 
 
 #filtering.py
 def apply_filter(data: ObservationData, mask: np.ndarray) -> ObservationData:
     updated_fields = {}
-    ignore_fields = {"all_lev"}
+    if np.shape(data.obs) != np.shape(data.lev):
+        ignore_fields = {"lev","all_lev"}
+    else:
+        ignore_fields = {"all_lev"}
 
     for field in fields(data):
         value = getattr(data, field.name)
@@ -185,7 +279,29 @@ def apply_filter(data: ObservationData, mask: np.ndarray) -> ObservationData:
     return replace(data, **updated_fields)
 
 
+#derived.py  Module for calculating derived values like job, joa, esigo, and esigb
+#This prevents overflow errors from trying to calculate these values before masking
+#since fill values are large numbers(~1e38)
+def calc_derived(data: ObservationData) -> ObservationData:
+    """
+    Compute job, joa, esigo, esigb (and amb if missing) from omb/oma/sigo.
+    Must be called AFTER filtering so no fill values remain (prevents overflow).
+    """
+    amb = data.amb if data.amb is not None else (data.omb - data.oma)
 
+    job = data.omb**2 / data.sigo**2
+    joa = data.oma**2 / data.sigo**2
+    esigo = data.omb * data.oma
+    esigb = data.omb * amb
+
+    return replace(
+        data,
+        amb=amb,
+        job=job,
+        joa=joa,
+        esigo=esigo,
+        esigb=esigb,
+    )
 
 
 #binning.py
@@ -198,7 +314,7 @@ class BinnedData:
     bin_heights: np.ndarray
     #level_type: str (pressure or channel)
 
-    
+#TODO: define this function    
 def create_pressure_bins():
     ...
 
@@ -251,6 +367,13 @@ class StatisticsData:
     ...
 
 #calculate_stats.py
+def count_obs_per_bin(binned_data: BinnedData) -> np.ndarray:
+    """Return per-bin observation counts only (no derived-variable access)."""
+    n_bins = len(binned_data.bin_labels)
+    return np.bincount(binned_data.bin_indices, minlength=n_bins)
+
+
+
 def calculate_stats(binned_data: BinnedData) -> StatisticsData:
     n_bins = len(binned_data.bin_labels)
     
@@ -306,52 +429,58 @@ def calculate_stats(binned_data: BinnedData) -> StatisticsData:
 #           Plotting Package         #
 ######################################
 #panels.py
-
-def plot_stats(binned_data: BinnedData, stats: StatisticsData):
-    """
-    Build the 4-panel statistics figure from a BinnedData object and a
-    StatisticsData object.
-
-    Returns the matplotlib Figure so the caller can later decide to
-    plt.show() it or save it with fig.savefig(...).
-    """
+#TODO: Change y labels to reflect lev_type
+def plot_stats(pass_data: BinnedData, fail_data:BinnedData, stats: StatisticsData):
+    
     fig = plt.figure(figsize=(10, 7))  # hardcoded size for now
 
     plt.subplot(2, 2, 1)
-    _panel_nobs(binned_data, stats)
+    _panel_nobs(pass_data, fail_data)
 
     plt.subplot(2, 2, 2)
-    _panel_resstats(binned_data, stats)
+    _panel_resstats(pass_data, stats)
 
     plt.subplot(2, 2, 3)
-    _panel_jo(binned_data, stats)
+    _panel_jo(pass_data, stats)
 
     plt.subplot(2, 2, 4)
-    _panel_sigo(binned_data, stats)
+    _panel_sigo(pass_data, stats)
 
     return fig
 
 
-def _panel_nobs(binned_data: BinnedData, stats: StatisticsData):
-    """Panel 1: Observation count vs Channel."""
-    bin_centers = binned_data.bin_centers
-    bin_heights = binned_data.bin_heights
-    bar_width = bin_heights * 0.4
-    offset = -0.5
+def _panel_nobs(pass_data: BinnedData, fail_data: BinnedData):
+    
+    pass_nobs = count_obs_per_bin(pass_data)
+    fail_nobs = count_obs_per_bin(fail_data)
 
-    labeled = False
+    bin_centers = pass_data.bin_centers
+    bin_heights = pass_data.bin_heights
+    bar_width = bin_heights * 0.8   # wider single bar since we overlap now
+
     for i in range(len(bin_centers)):
         y = bin_centers[i]
+
+        # Draw the "not used" (fail) bar first, fully opaque.
         plt.barh(
-            y + offset * bar_width[i],
-            stats.nobs[i],
+            y, fail_nobs[i],
+            height=bar_width[i],
+            color="red",
+            label="not used" if i == 0 else "",
+            zorder=1,
+        )
+
+        # Draw the "used" (pass) bar on top, at the SAME y, with opacity
+        # so the red underneath is still visible.
+        plt.barh(
+            y, pass_nobs[i],
             height=bar_width[i],
             color="green",
-            label="used" if not labeled else "",
+            alpha=0.6,
+            label="used" if i == 0 else "",
+            zorder=2,
         )
-        labeled = True
 
-    # Channel hardcoded for now (will use binned_data.level_type later).
     plt.ylabel("Channel")
     plt.title("Observation Count vs Channel")
     plt.grid(True, which="both", linestyle="--", alpha=0.5)
@@ -462,36 +591,51 @@ def _panel_sigo(binned_data: BinnedData, stats: StatisticsData):
 
 ###################################################################################
 
+#utils.py
+def timer(base_fn):
+    def enhanced_fn():
+        start_time = time.perf_counter()
+        base_fn()
+        end_time = time.perf_counter()
+        print(f"Task time: {end_time - start_time} seconds")
+    return enhanced_fn    
+
+
+
+filename = "python/amsua_metop-b.20260125T150000Z.nc4"
+#@timer
 def main() -> None:
-    reader = ODSReader()
+    
+    #IODA file
+    reader = IODAReader()
     data = reader.read(filename)
 
-    print(f"Information about data in file {filename}")
-    print(f"Maximum level: {np.max(data.lev)}")
-    print(f"Max amb: {np.max(data.amb)}")
-    print(f"Number of observations: {np.size(data.obs)}")
-    print(f"Length of 'all_lev' array is: {np.size(data.all_lev)}")
     #masking
-    my_mask = valid_mask(data)
-    print(f"The length of the mask array is: {np.size(my_mask)}")
-
+    valid_mask = fill_val_mask(data)
+    
     #filtering
-    filtered_data = apply_filter(data, my_mask)
-    print(f"Length of the new observations: {np.size(filtered_data.obs)}")
+    valid_data = apply_filter(data, valid_mask)
+
+    #QC masking
+    pass_mask = qc_pass_mask(valid_data)
+    fail_mask = qc_fail_mask(valid_data)
+
+
+    pass_data = apply_filter(valid_data, pass_mask)
+    fail_data = apply_filter(valid_data, fail_mask)
+
+    #calculate job, joa, esigo, esigb
+    pass_data = calc_derived(pass_data)
 
     #binning
-    binned_data = create_channel_bins(filtered_data)
-
-    print(f"Length of of binned data 'obs' array is: {np.size(binned_data.data.obs)}")
+    pass_data_binned = create_channel_bins(pass_data)
+    fail_data_binned = create_channel_bins(fail_data)
     #stats
-    stats_data = calculate_stats(binned_data)
+    data_stats = calculate_stats(pass_data_binned)
 
     #plotting
-    print("Time to plot!")
-    my_plot = plot_stats(binned_data, stats_data)
+    panel_plot = plot_stats(pass_data_binned,fail_data_binned, data_stats)
     plt.show()
-
-
 
 
 
