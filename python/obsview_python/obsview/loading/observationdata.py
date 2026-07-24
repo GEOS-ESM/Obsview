@@ -21,8 +21,8 @@ class ObservationData:
     qc: np.ndarray
     lev: np.ndarray
 
-    # lat: Optional[np.ndarray] #optional for now
-    # lon: Optional[np.ndarray]
+    lat: Optional[np.ndarray] 
+    lon: Optional[np.ndarray]
     # time: Optional[np.ndarray]
     
     #error, also add other relevant variables used in calculations

@@ -7,10 +7,13 @@ from ..stats.statisticsdata import StatisticsData
 from ..stats.calc_stats import count_obs_per_bin
 
 #TODO: Change y labels to reflect lev_type
-def plot_stats(pass_data: BinnedData, fail_data:BinnedData, stats: StatisticsData):
+
+MAIN_TITLE = "AMSU-A METOP-B  |  2026-01-25 15:00 UTC"
+def plot_stats(pass_data: BinnedData, fail_data:BinnedData, stats: StatisticsData, title: str = MAIN_TITLE):
     
     fig = plt.figure(figsize=(10, 7))  # hardcoded size for now
-
+    fig.suptitle(title, fontsize = 14, fontweight = "bold")
+    
     plt.subplot(2, 2, 1)
     _panel_nobs(pass_data, fail_data)
 

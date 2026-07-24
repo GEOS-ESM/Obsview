@@ -5,14 +5,15 @@ from ..loading.observationdata import ObservationData
 #This should be for data that is valid, not necessarily passes qc
 def valid_mask(data: ObservationData) -> np.ndarray: 
     missing_val = 1.0e15
+    qc_missing_val = -127
     valid_mask = (
-        (data.qc == 0)              #Should be changed later for missing value
+        (data.qc != qc_missing_val)              #Should be changed later for missing value
         #& (data.sid == -999)        #Ditto
         & (data.kt == 40)           #This should be omitted later
-        & (data.lev < missing_val)
-        & (data.omb < missing_val)
-        & (data.oma < missing_val)
-        & (data.amb < missing_val)
+        # & (data.lev < missing_val)
+        # & (data.omb < missing_val)
+        # & (data.oma < missing_val)
+        # & (data.amb < missing_val)
     )
     return valid_mask
 
@@ -28,6 +29,26 @@ def fill_val_mask(data:ObservationData) -> np.ndarray:
     )    
     return valid_mask
 
+
+#Latitude/longitude masks
+
+def valid_latlon_mask(data: ObservationData) -> np.ndarray:
+    valid_mask = (
+        (data.lat < np.abs(data.fill_values["lat"]))
+        &(data.lon < np.abs(data.fill_values["lat"]))
+    )
+    return valid_mask
+
+
+# def nh_mask
+# def sh_mask
+# def tr_mask
+
+
+
+
+
+#Quality control masks
 def qc_pass_mask(data: ObservationData) -> np.ndarray:
     qc_pass = (data.qc == 0)
     return qc_pass

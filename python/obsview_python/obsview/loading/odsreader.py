@@ -25,7 +25,9 @@ class ODSReader:
             "qc": nc.variables['qcexcl'][:],
             "lev": nc.variables['lev'][:],
             "kt": nc.variables['kt'][:],
-            "sid": nc.variables['kx'][:]
+            "sid": nc.variables['kx'][:],
+            "lat": nc.variables['lat'][:],
+            "lon": nc.variables['lon'][:]
         }
         return raw
     
@@ -48,15 +50,13 @@ class ODSReader:
             sigo = raw["sigo"].flatten(),
             qc = raw["qc"].flatten(),
             lev = lev,
+            lat = raw["lat"].flatten(),
+            lon = raw['lon'].flatten(),
 
             kt = raw["kt"].flatten(),
             sid = raw["sid"].flatten(),
 
             amb = raw["amb"].flatten(),
-            job = raw["job"].flatten(),
-            joa = raw["joa"].flatten(),
-            esigo = raw["esigo"].flatten(),
-            esigb = raw["esigb"].flatten(),
 
             all_lev = np.unique(lev[lev< 1.0e15])
         )

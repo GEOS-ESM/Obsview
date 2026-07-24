@@ -6,10 +6,8 @@ from ..loading.observationdata import ObservationData
 
 def apply_filter(data: ObservationData, mask: np.ndarray) -> ObservationData:
     updated_fields = {}
-    if np.shape(data.obs) != np.shape(data.lev):
-        ignore_fields = {"lev","all_lev"}
-    else:
-        ignore_fields = {"all_lev"}
+
+    ignore_fields = {"all_lev"}
 
     for field in fields(data):
         value = getattr(data, field.name)

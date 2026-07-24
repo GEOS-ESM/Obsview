@@ -16,6 +16,7 @@ class IODAReader:
     def _load_data(self, nc: Dataset) -> dict: 
         varname = "brightnessTemperature"     #Hardcoded for now, add function that takes user input to select variable name
         n_locations = np.size(nc.variables["Location"][:])
+        n_channels = np.size(nc.variables["Channel"][:])
         raw = {
         "obs": nc.groups["ObsValue"].variables[varname][:].flatten(),
         "omb": nc.groups["ombg"].variables[varname][:].flatten(),
@@ -25,7 +26,9 @@ class IODAReader:
         "all_lev": nc.variables["Channel"][:].flatten(),     #Hardcoded for now, change later to accept logic to determine what type of level variable(others include pressure and wavelength)
         "sid": 326,     #SID for Amsua Metop-B satellite, change later using config/rc file
         "kt": 40,       #Hardcoded for now, change later using config file
-        "lev": np.tile(nc.variables["Channel"][:],n_locations)
+        "lev": np.tile(nc.variables["Channel"][:],n_locations),
+        "lat": np.repeat(nc.groups["MetaData"].variables["latitude"][:], n_channels),
+        "lon": np.repeat(nc.groups["MetaData"].variables["longitude"][:], n_channels)
         }
         return raw
         
@@ -48,6 +51,8 @@ class IODAReader:
             "sigo": nc.groups["EffectiveError0"].variables[varname],
             "qc":   nc.groups["EffectiveQC0"].variables[varname],
             "lev":  nc.variables["Channel"],
+            "lat": nc.groups['MetaData'].variables['latitude'],
+            "lon": nc.groups['MetaData'].variables['longitude']
         }
 
         fill_values = {}
@@ -67,6 +72,8 @@ class IODAReader:
             sigo = raw["sigo"],
             qc = raw["qc"],
             lev = raw["lev"],
+            lat = raw["lat"],
+            lon = raw["lon"],
             kt = raw["kt"],
             sid = raw["sid"],
             amb = raw["amb"],
