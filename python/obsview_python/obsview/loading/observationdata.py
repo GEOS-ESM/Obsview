@@ -39,6 +39,7 @@ class ObservationData:
     lev_type: Optional[str] = None #'pressure' or 'channel'
     all_lev: Optional[np.ndarray] = None
     fill_values: Optional[dict] = None
+    datetime: Optional[object] = None
     
 #For loading multiple files
 @dataclass
