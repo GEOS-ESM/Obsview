@@ -104,7 +104,7 @@ def _series_counts_panel(ax, ts: TimeSeriesData, times, ci: int):
 
     # Not-used underneath (red), used on top (green).
     ax.bar(times, unused, width=w, color="red", label="Not used", zorder=1)
-    ax.bar(times, used, width=w, color="green", alpha=0.9,
+    ax.bar(times, used, width=w, color="green", alpha=0.6,
            label="Used", zorder=2)
 
     ax.set_title("Data counts:", loc="left", fontsize=10)
