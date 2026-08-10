@@ -1,6 +1,10 @@
 #Module containing ODSReader object 
+import os
+import re
 import numpy as np
 from netCDF4 import Dataset
+from dataclasses import replace
+from datetime import datetime, timezone
 from .observationdata import ObservationData
 
 
@@ -27,7 +31,7 @@ class ODSReader:
             "kt": nc.variables['kt'][:],
             "sid": nc.variables['kx'][:],
             "lat": nc.variables['lat'][:],
-            "lon": nc.variables['lon'][:]
+            "lon": nc.variables['lon'][:], 
         }
         return raw
     
@@ -58,9 +62,21 @@ class ODSReader:
 
             amb = raw["amb"].flatten(),
 
-            all_lev = np.unique(lev[lev< 1.0e15])
+            all_lev = np.unique(lev[lev< 1.0e15]),
         )
         return obj
+    
+    #Subfunction for turning array of seconds after epoch into single datetime object
+    def _parse_datetime_from_filename(self, filename: str) -> datetime:
+        base = os.path.basename(filename)
+
+        # Match 'YYYYMMDD_HHz' (case-insensitive 'z').
+        m = re.search(r"(\d{8})_(\d{2})z", base, flags=re.IGNORECASE)
+        date_str, hour_str = m.group(1), m.group(2)
+
+        # Build a UTC-aware datetime; strptime validates the calendar date.
+        dt = datetime.strptime(date_str + hour_str, "%Y%m%d%H")
+        return dt.replace(tzinfo=timezone.utc)    
 
     #Main reading method to be used to load and process ODS files
     def read(self, filename: str) -> ObservationData:
@@ -68,5 +84,7 @@ class ODSReader:
         raw = self._load_variables(nc)
         raw = self._calc_variables(raw)
         obj = self._flatten_data(raw)
+        dt = self._parse_datetime_from_filename(filename)
+        obj = replace(obj, datetime=dt)
 
         return obj

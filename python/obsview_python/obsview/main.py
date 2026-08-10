@@ -56,7 +56,7 @@ def extract_member_path(tar: tarfile.TarFile, member: tarfile.TarInfo, dest_dir:
 
 
 #Function to loop over IODA files and create a timeseries data object
-def build_time_series(filenames: List[str]) -> TimeSeriesData:
+def build_ts_from_ioda(filenames: List[str]) -> TimeSeriesData:
     reader = IODAReader()
     records = []        #List to append relevant contents of each file to
 
@@ -104,7 +104,6 @@ def build_time_series(filenames: List[str]) -> TimeSeriesData:
     )
     return obj
     ...
-
 
 
 def build_ts_from_tar(tar_path: str, instrument: str) -> TimeSeriesData:
@@ -164,6 +163,55 @@ def build_ts_from_tar(tar_path: str, instrument: str) -> TimeSeriesData:
     return obj
 
 
+def build_ts_from_ods(filenames: List[str]) -> TimeSeriesData:
+    reader = ODSReader()
+    records = []        #List to append relevant contents of each file to
+
+    for fname in filenames:
+        data = reader.read(fname)
+        #masking
+        val_mask = valid_mask(data)
+    
+        #filtering
+        valid_data = apply_filter(data, val_mask)
+        
+        #QC masking
+        pass_mask = qc_pass_mask(valid_data)
+        fail_mask = qc_fail_mask(valid_data)
+        pass_data = apply_filter(valid_data, pass_mask)
+        fail_data = apply_filter(valid_data, fail_mask)
+
+        #calculate job, joa, esigo, esigb
+        pass_data = calc_derived(pass_data)                 #Only calculate variables for QC = 0 data
+
+        #binning
+        pass_data_binned = create_channel_bins(pass_data)
+        fail_data_binned = create_channel_bins(fail_data)
+        #stats
+        pass_stats_binned = calculate_stats(pass_data_binned)      #Only calculate stats on QC = 0 data
+
+        #append objects to records list
+        records.append(
+            (data.datetime, pass_stats_binned, pass_data_binned, fail_data_binned)
+        )
+
+    records.sort(key=lambda r: r[0])        #Sort chronologically
+
+    #Append datetimes
+    datetimes  = [r[0] for r in records]
+    pass_stats = [r[1] for r in records]
+    pass_data  = [r[2] for r in records]
+    fail_data  = [r[3] for r in records]
+
+    obj = TimeSeriesData(
+        datetimes = datetimes,
+        pass_stats = pass_stats,
+        pass_data = pass_data,
+        fail_data = fail_data 
+    )
+    return obj
+    ...
+
 
 def make_map_plot(filename: str) -> None:
     #IODA file
@@ -201,15 +249,11 @@ def make_map_plot(filename: str) -> None:
 
 
 def main() -> None:
-
-   tar_path = "/Users/ltrayano/Desktop/Obsview/Obsview/python/data/IODA files"
-   instrument_name = "atms_n20"
-
-   ts = build_ts_from_tar(tar_path, instrument_name) 
-   
-   series_plot = plot_series(ts)
-   plt.show()
-   ...
+    filenames = sorted(glob.glob("python/data/ODS files/j54rp1.diag_atms_n20.*.ods"))
+    ts = build_ts_from_ods(filenames)
+    series_plot = plot_series(ts)
+    plt.show()
+    ...
 
     
 

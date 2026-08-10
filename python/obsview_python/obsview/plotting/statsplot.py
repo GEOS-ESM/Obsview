@@ -8,7 +8,7 @@ from ..stats.calc_stats import count_obs_per_bin
 
 #TODO: Change y labels to reflect lev_type
 
-MAIN_TITLE = "AMSU-A METOP-B  |  2026-01-25 15:00 UTC"
+MAIN_TITLE = "AMSU-A NOAA 19  |  2023-08-01 00:00 UTC"
 def plot_stats(pass_data: BinnedData, fail_data:BinnedData, stats: StatisticsData, title: str = MAIN_TITLE):
     
     fig = plt.figure(figsize=(10, 7))  # hardcoded size for now

@@ -3,6 +3,7 @@ import numpy as np
 from ..loading.observationdata import ObservationData
 
 #This should be for data that is valid, not necessarily passes qc
+#TODO: Make choosing observation types(kt) happen elsewhere
 def valid_mask(data: ObservationData) -> np.ndarray: 
     missing_val = 1.0e15
     qc_missing_val = -127

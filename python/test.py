@@ -1,58 +1,129 @@
 import os
 import re
-import glob
-import tarfile
-import tempfile
+import numpy as np
+from netCDF4 import Dataset
+from dataclasses import replace, dataclass
+from datetime import datetime, timezone
 from typing import Optional
 
-tar_path = "/Users/ltrayano/Desktop/Obsview/Obsview/python/data/IODA files"
-instrument_name = "atms_n20"
+
+@dataclass
+class ObservationData:
+    obs: np.ndarray
+    omb: np.ndarray
+    oma: np.ndarray
+    sigo: np.ndarray
+    qc: np.ndarray
+    lev: np.ndarray
+
+    lat: Optional[np.ndarray] 
+    lon: Optional[np.ndarray]
+    # time: Optional[np.ndarray]
+    
+    #error, also add other relevant variables used in calculations
+    #scale
+    kt: np.ndarray
+    sid: np.ndarray
+    #calculated variables
+    amb: np.ndarray
+    job: Optional[np.ndarray] = None
+    joa: Optional[np.ndarray] = None
+    esigo: Optional[np.ndarray] = None
+    esigb: Optional[np.ndarray] = None
+    #metadata: Metadata
+    lev_type: Optional[str] = None #'pressure' or 'channel'
+    all_lev: Optional[np.ndarray] = None
+    fill_values: Optional[dict] = None
+    datetime: Optional[object] = None
+    
+
+#TODO: add logic that populates lev_type with either "pressure" or "channel"
 
 
-#Function to find a specific .nc4 file inside a tarball of a specified instrument(e.g. atms_n20)
-def find_instrument_member(tar: tarfile.TarFile, instrument: str) -> Optional[tarfile.TarInfo]:
-    members = tar.getmembers()
-    #Loop over all members of a tarball
-    for member in members:
-        base = os.path.basename(member.name)
-        
-        if base.startswith(instrument) and base.endswith("nc4"):
-            return member
-         
-    return None
-    ...
+class ODSReader:
 
-def extract_member_path(tar: tarfile.TarFile, member: tarfile.TarInfo, dest_dir: str) -> str:
-     # Reject non-regular files (symlinks, hardlinks, devices, dirs-as-files).
-    if not member.isfile():
-        raise ValueError(f"Refusing to extract non-regular member: {member.name!r}")
+    #Open NetCDF file
+    def _open_file(self,filename: str) -> Dataset:
+        nc = Dataset(filename, "r")
+        nc.set_auto_mask(False)
+        return nc
 
-    member_path = os.path.join(dest_dir, member.name)
+    #Load variable data into Observation data class
+    def _load_variables(self, nc: Dataset) -> dict:
+        raw = {
+            "obs": nc.variables['obs'][:],
+            "omb": nc.variables['omf'][:],
+            "oma": nc.variables['oma'][:],
+            "sigo": nc.variables['xvec'][:],
+            "qc": nc.variables['qcexcl'][:],
+            "lev": nc.variables['lev'][:],
+            "kt": nc.variables['kt'][:],
+            "sid": nc.variables['kx'][:],
+            "lat": nc.variables['lat'][:],
+            "lon": nc.variables['lon'][:], 
+        }
+        return raw
+    
+     #Calculate new variables and append to raw dictionary
+    def _calc_variables(self, raw: dict) -> dict:
+        #Calculate
+        amb = raw["omb"] - raw["oma"]
+        #Append
+        raw["amb"] = amb
+        return raw
 
-    # Extract just this member. On Python 3.12+, filter='data' adds another
-    # layer of protection; guard so it still works on older versions.
-    try:
-        tar.extract(member, path=dest_dir, filter="data")  # py3.12+
-    except TypeError:
-        tar.extract(member, path=dest_dir)                 # older Python
+    #Flatten data, return ObservationData object
+    def _flatten_data(self, raw: dict) -> ObservationData:
+        lev = raw["lev"].flatten()
 
-    extracted = os.path.abspath(member_path)
-    return extracted
+        obj = ObservationData(
+            obs = raw["obs"].flatten(),
+            omb = raw["omb"].flatten(),
+            oma = raw["oma"].flatten(),
+            sigo = raw["sigo"].flatten(),
+            qc = raw["qc"].flatten(),
+            lev = lev,
+            lat = raw["lat"].flatten(),
+            lon = raw['lon'].flatten(),
 
-    ...
+            kt = raw["kt"].flatten(),
+            sid = raw["sid"].flatten(),
+
+            amb = raw["amb"].flatten(),
+
+            all_lev = np.unique(lev[lev< 1.0e15]),
+        )
+        return obj
+    
+    #Subfunction for turning array of seconds after epoch into single datetime object
+    def _parse_datetime_from_filename(self, filename: str) -> datetime:
+        base = os.path.basename(filename)
+
+        # Match 'YYYYMMDD_HHz' (case-insensitive 'z').
+        m = re.search(r"(\d{8})_(\d{2})z", base, flags=re.IGNORECASE)
+        date_str, hour_str = m.group(1), m.group(2)
+
+        # Build a UTC-aware datetime; strptime validates the calendar date.
+        dt = datetime.strptime(date_str + hour_str, "%Y%m%d%H")
+        return dt.replace(tzinfo=timezone.utc)    
+
+    #Main reading method to be used to load and process ODS files
+    def read(self, filename: str) -> ObservationData:
+        nc = self._open_file(filename)
+        raw = self._load_variables(nc)
+        raw = self._calc_variables(raw)
+        obj = self._flatten_data(raw)
+        dt = self._parse_datetime_from_filename(filename)
+        obj = replace(obj, datetime=dt)
+
+        return obj
 
 
-tar_file_paths = sorted(glob.glob(os.path.join(tar_path, "*.tar")))
 
-for tar_file_path in tar_file_paths:
-    with tarfile.open(tar_file_path, mode = "r:*") as tar:
-        
-        member = find_instrument_member(tar, instrument_name)
-        print(f"Member is: {member}")
-        if member == None:      #If instrument file is missing...
-            continue
-        with tempfile.TemporaryDirectory() as tmp:
-            nc_path = extract_member_path(tar, member, tmp)
-            print(f"Temp nc4 path is: {nc_path}")
-            ...
-        ...
+def main():
+    reader = ODSReader()
+    data = reader.read("python/x0050.diag_amsua_n19.20230801_00z.ods")
+    print(f"Date time: {data.datetime}")
+
+
+main()
