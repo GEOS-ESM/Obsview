@@ -25,8 +25,6 @@ def fill_val_mask(data:ObservationData) -> np.ndarray:
         & (data.omb < np.abs(data.fill_values['omb']))
         & (data.oma < np.abs(data.fill_values['oma']))
         & (data.sigo < np.abs(data.fill_values['sigo']))
-        & (data.lev < np.abs(data.fill_values['lev']))
-
     )    
     return valid_mask
 

@@ -11,11 +11,46 @@ class BinnedData:
     bin_indices: np.ndarray         
     bin_labels: np.ndarray          #Array of each bin level (unique)
     bin_heights: np.ndarray
-    #level_type: str (pressure or channel)
+    #level_type: str (pressure or channel) 
 
-#TODO: define this function    
-def create_pressure_bins():
-    ...
+def create_bins(data: ObservationData) -> BinnedData:
+    if data.lev_type == "channel":
+        return create_channel_bins(data)
+    elif data.lev_type == "pressure":
+        return create_pressure_bins(data)
+    raise ValueError(f"Unknown lev_type: {data.lev_type!r}")
+
+
+
+def create_pressure_bins(data: ObservationData) -> BinnedData:
+    NUM_BINS = 18                 # Hardcoded for now
+    LEVLIM = [1000.0, 0.1]        # [bottom, top] in hPa, hardcoded for now
+
+    pressure_hpa = data.lev / 100.0
+
+    bins = np.logspace(np.log10(LEVLIM[1]), np.log10(LEVLIM[0]), num=NUM_BINS)
+
+    raw_indices = np.digitize(pressure_hpa, bins)
+
+    #Sort observations by pressure
+    sort_indices = np.argsort(pressure_hpa)
+    #Bin data
+    binned_data = apply_filter(data, sort_indices)
+    indices = raw_indices[sort_indices]
+
+    # Bin centers/heights, one per interior bin (len(bins)-1 bins).
+    centers = (bins[:-1] + bins[1:]) / 2
+    heights = np.diff(bins)
+    labels = centers
+
+    obj = BinnedData(
+        data=binned_data,
+        bin_centers=centers,
+        bin_indices=indices,
+        bin_labels=labels,
+        bin_heights=heights,
+    )
+    return obj
 
 def create_channel_bins(data: ObservationData) -> BinnedData:
     channels = np.unique(data.all_lev)   # Same as bin_labels

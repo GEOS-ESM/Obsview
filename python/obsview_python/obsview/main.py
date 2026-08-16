@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 from typing import List, Optional
 import glob
 import os
-import re
 import tarfile
 import tempfile
 
@@ -14,7 +13,7 @@ from .loading.timeseriesdata import TimeSeriesData
 from .processing.masking import valid_mask, fill_val_mask, valid_latlon_mask, qc_pass_mask, qc_fail_mask
 from .processing.filtering import apply_filter
 from .processing.derived import calc_derived
-from .processing.binning import create_channel_bins
+from .processing.binning import create_channel_bins, create_bins
 from .stats.calc_stats import calculate_stats
 from .plotting.statsplot import plot_stats
 from .plotting.spatialcoverage import plot_coverage
@@ -56,12 +55,12 @@ def extract_member_path(tar: tarfile.TarFile, member: tarfile.TarInfo, dest_dir:
 
 
 #Function to loop over IODA files and create a timeseries data object
-def build_ts_from_ioda(filenames: List[str]) -> TimeSeriesData:
+def build_ts_from_ioda(filenames: List[str], varname: str) -> TimeSeriesData:
     reader = IODAReader()
     records = []        #List to append relevant contents of each file to
 
     for fname in filenames:
-        data = reader.read(fname)
+        data = reader.read(fname, varname)
         #masking
         val_mask = fill_val_mask(data)
     
@@ -106,7 +105,7 @@ def build_ts_from_ioda(filenames: List[str]) -> TimeSeriesData:
     ...
 
 
-def build_ts_from_tar(tar_path: str, instrument: str) -> TimeSeriesData:
+def build_ts_from_tar(tar_path: str, instrument: str, varname: str) -> TimeSeriesData:
     tar_file_paths = sorted(glob.glob(os.path.join(tar_path, "*.tar")))
     records = []
     reader = IODAReader()
@@ -119,7 +118,7 @@ def build_ts_from_tar(tar_path: str, instrument: str) -> TimeSeriesData:
                 continue
             with tempfile.TemporaryDirectory() as tmp:
                 nc_path = extract_member_path(tar, member, tmp)
-                data = reader.read(nc_path)
+                data = reader.read(nc_path,varname)
                 #masking
                 val_mask = fill_val_mask(data)
             
@@ -213,10 +212,10 @@ def build_ts_from_ods(filenames: List[str]) -> TimeSeriesData:
     ...
 
 
-def make_map_plot(filename: str) -> None:
+def make_map_plot(filename: str, varname: str) -> None:
     #IODA file
     reader = IODAReader()
-    data = reader.read(filename)
+    data = reader.read(filename, varname)
     
 
     #masking
@@ -249,13 +248,28 @@ def make_map_plot(filename: str) -> None:
 
 
 def main() -> None:
-    filenames = sorted(glob.glob("python/data/ODS files/j54rp1.diag_atms_n20.*.ods"))
-    ts = build_ts_from_ods(filenames)
-    series_plot = plot_series(ts)
-    plt.show()
-    ...
+    filename = "python/data/IODA files/j54rp1.jedi_hofx.20260101_03z/sondes.20260101T030000Z.nc4"
+    varname = "windEastward"
 
-    
+    reader = IODAReader()
+    data = reader.read(filename, varname)
+    val_mask = fill_val_mask(data)
+    valid_data = apply_filter(data, val_mask)
+
+    pass_mask = qc_pass_mask(valid_data)
+    fail_mask = qc_fail_mask(valid_data)
+    pass_data = apply_filter(valid_data, pass_mask)
+    fail_data = apply_filter(valid_data, fail_mask)
+
+    pass_data = calc_derived(pass_data)  
+
+    pass_data_binned = create_bins(pass_data)
+    fail_data_binned = create_bins(fail_data)
+
+    pass_stats_binned = calculate_stats(pass_data_binned)
+
+    stats_plot = plot_stats(pass_data_binned, fail_data_binned, pass_stats_binned)
+    plt.show()
 
 
 if __name__ == '__main__':

@@ -23,24 +23,24 @@ class ObservationData:
 
     lat: Optional[np.ndarray] 
     lon: Optional[np.ndarray]
-    # time: Optional[np.ndarray]
-    
-    #error, also add other relevant variables used in calculations
+    #error
     #scale
-    kt: np.ndarray
-    sid: np.ndarray
+    kt: Optional[np.ndarray]
+    sid: Optional[np.ndarray]
     #calculated variables
-    amb: np.ndarray
+    amb: Optional[np.ndarray]
     job: Optional[np.ndarray] = None
     joa: Optional[np.ndarray] = None
     esigo: Optional[np.ndarray] = None
     esigb: Optional[np.ndarray] = None
     #metadata: Metadata
-    lev_type: Optional[str] = None #'pressure' or 'channel'
+    lev_type: Optional[str] = None          #'pressure' or 'channel'
     all_lev: Optional[np.ndarray] = None
     fill_values: Optional[dict] = None
     datetime: Optional[object] = None
     
+
+
 #For loading multiple files
 @dataclass
 class ObservationDataset:

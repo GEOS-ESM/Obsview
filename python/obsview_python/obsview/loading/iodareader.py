@@ -5,55 +5,75 @@ from dataclasses import replace
 from datetime import datetime, timezone
 from .observationdata import ObservationData
 
-#TODO: add logic that populates lev_type with either "pressure" or "channel"
 
 class IODAReader:
     
+    def _get_lev_type(self, varname: str) -> str:
+        if varname == 'brightnessTemperature':
+            lev_type = 'channel'
+        else:
+            lev_type = 'pressure'
+        return lev_type
+
     #Open NetCDF file
     def _open_file(self,filename: str) -> Dataset:
         nc = Dataset(filename, "r")
         nc.set_auto_mask(False)
         return nc
     #Load data and flatten incoming arrays
-    def _load_data(self, nc: Dataset) -> dict: 
-        varname = "brightnessTemperature"     #Hardcoded for now, add function that takes user input to select variable name
+    def _load_data(self, nc: Dataset, varname: str) -> dict: 
+        lev_type = self._get_lev_type(varname)
         n_locations = np.size(nc.variables["Location"][:])
-        n_channels = np.size(nc.variables["Channel"][:])
+
         raw = {
         "obs": nc.groups["ObsValue"].variables[varname][:].flatten(),
         "omb": nc.groups["ombg"].variables[varname][:].flatten(),
         "oma": nc.groups["oman"].variables[varname][:].flatten(),
         "sigo": nc.groups["EffectiveError0"].variables[varname][:].flatten(),
         "qc": nc.groups["EffectiveQC0"].variables[varname][:].flatten(),
-        "all_lev": nc.variables["Channel"][:].flatten(),     #Hardcoded for now, change later to accept logic to determine what type of level variable(others include pressure and wavelength)
+        "datetime": nc.groups["MetaData"].variables["dateTime"][:].flatten(),
+
+        #TODO: Change these to not be hardcoded
         "sid": 326,     #SID for Amsua Metop-B satellite, change later using config/rc file
-        "kt": 40,       #Hardcoded for now, change later using config file
-        "lev": np.tile(nc.variables["Channel"][:],n_locations),
-        "lat": np.repeat(nc.groups["MetaData"].variables["latitude"][:], n_channels),
-        "lon": np.repeat(nc.groups["MetaData"].variables["longitude"][:], n_channels),
-        "datetime": nc.groups["MetaData"].variables["dateTime"][:].flatten()
+        "kt": 40       
         }
+
+    #Level-type specific variables 
+        if lev_type == 'pressure':
+            raw["lev"] = nc.groups["MetaData"].variables["pressure"][:]
+            raw["all_lev"] = np.unique(raw["lev"])
+            raw["lat"] = nc.groups["MetaData"].variables["latitude"][:]
+            raw["lon"] = nc.groups["MetaData"].variables["longitude"][:]
+            ...
+        elif lev_type == 'channel':
+            n_channels = np.size(nc.variables["Channel"][:])
+            raw["all_lev"] = nc.variables["Channel"][:].flatten()
+            raw["lev"] = np.tile(nc.variables["Channel"][:],n_locations)
+            raw["lat"] = np.repeat(nc.groups["MetaData"].variables["latitude"][:], n_channels)
+            raw["lon"] = np.repeat(nc.groups["MetaData"].variables["longitude"][:], n_channels)
+        else:
+            raise ValueError(f"Unknown lev_type: {lev_type!r}")
+
+
         return raw
+        
+
         
     def _calc_variables(self, raw: dict) -> dict:
         #Calculate
         amb = raw["omb"] - raw["oma"]
-
         #Append
         raw["amb"] = amb
         return raw
     
-    def _load_fill_values(self, nc: Dataset) -> dict:
-        varname = "brightnessTemperature"  # keep consistent with _load_data
-
-        # Map logical name -> the actual NetCDF variable object it was read from.
-        # (Must mirror the sources used in _load_data.)
+    def _load_fill_values(self, nc: Dataset, varname: str) -> dict:
+    
         var_sources = {
             "omb":  nc.groups["ombg"].variables[varname],
             "oma":  nc.groups["oman"].variables[varname],
             "sigo": nc.groups["EffectiveError0"].variables[varname],
             "qc":   nc.groups["EffectiveQC0"].variables[varname],
-            "lev":  nc.variables["Channel"],
+            #"lev":  nc.variables["Channel"],
             "lat": nc.groups['MetaData'].variables['latitude'],
             "lon": nc.groups['MetaData'].variables['longitude']
         }
@@ -88,7 +108,8 @@ class IODAReader:
         # Build a timezone-aware UTC datetime.
         return datetime.fromtimestamp(rounded_epoch, tz=timezone.utc)  
     
-    def _create_data_object(self, raw: dict, fill_values: dict) -> ObservationData:
+    def _create_data_object(self, raw: dict, fill_values: dict, varname: str) -> ObservationData:
+        level_type = self._get_lev_type(varname)
         obj = ObservationData(
             obs = raw["obs"],
             omb = raw["omb"],
@@ -102,19 +123,22 @@ class IODAReader:
             sid = raw["sid"],
             amb = raw["amb"],
             all_lev= raw["all_lev"],
-            fill_values = fill_values
+            fill_values = fill_values,
+            lev_type = level_type 
         )
         return obj
         ...
 
     
-    def read(self, filename: str) -> ObservationData:
+    def read(self, filename: str, varname: str) -> ObservationData:
+
         nc = self._open_file(filename)
-        raw = self._load_data(nc)
+        raw = self._load_data(nc, varname)
         raw = self._calc_variables(raw)
-        fill_values = self._load_fill_values(nc)
-        obj = self._create_data_object(raw, fill_values)
+        fill_values = self._load_fill_values(nc, varname)
+        obj = self._create_data_object(raw, fill_values, varname)
         #Make datetime object
         synoptic = self._synoptic_time_from_datetimes(raw["datetime"])
         obj = replace(obj, datetime=synoptic)
         return obj
+
