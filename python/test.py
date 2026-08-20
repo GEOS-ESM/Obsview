@@ -83,7 +83,7 @@ class IODAReader:
         "datetime": nc.groups["MetaData"].variables["dateTime"][:].flatten(),
 
         #TODO: Change these to not be hardcoded
-        "sid": 326,     #SID for Amsua Metop-B satellite, change later using config/rc file
+        "sid": nc.groups["MetaData"].variables["satelliteIdentifier"][:].flatten(),
         "kt": 40       
         }
 
@@ -205,6 +205,7 @@ varname = "windEastward"        #(U) zonal wind
 def main():
     reader = IODAReader()
     data = reader.read(filename, varname)
+    print(f"Unique sid: {np.unique(data.sid)}")
 
     
 

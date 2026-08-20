@@ -6,13 +6,19 @@ from netCDF4 import Dataset
 from dataclasses import replace
 from datetime import datetime, timezone
 from .observationdata import ObservationData
-
-
-#TODO: add logic that populates lev_type with either "pressure" or "channel"
+from ..config import VARNAME_TO_KT
+from ..processing.filtering import apply_filter
 
 
 class ODSReader:
 
+    def _get_lev_type(self, varname: str) -> str:
+        if varname == 'brightnessTemperature':
+            lev_type = 'channel'
+        else:
+            lev_type = 'pressure'
+        return lev_type
+    
     #Open NetCDF file
     def _open_file(self,filename: str) -> Dataset:
         nc = Dataset(filename, "r")
@@ -29,7 +35,7 @@ class ODSReader:
             "qc": nc.variables['qcexcl'][:],
             "lev": nc.variables['lev'][:],
             "kt": nc.variables['kt'][:],
-            "sid": nc.variables['kx'][:],
+            "kx": nc.variables['kx'][:],
             "lat": nc.variables['lat'][:],
             "lon": nc.variables['lon'][:], 
         }
@@ -44,9 +50,9 @@ class ODSReader:
         return raw
 
     #Flatten data, return ObservationData object
-    def _flatten_data(self, raw: dict) -> ObservationData:
+    def _flatten_data(self, raw: dict, varname: str) -> ObservationData:
         lev = raw["lev"].flatten()
-
+        level_type = self._get_lev_type(varname)
         obj = ObservationData(
             obs = raw["obs"].flatten(),
             omb = raw["omb"].flatten(),
@@ -58,15 +64,28 @@ class ODSReader:
             lon = raw['lon'].flatten(),
 
             kt = raw["kt"].flatten(),
-            sid = raw["sid"].flatten(),
+            kx = raw["kx"].flatten(),
 
             amb = raw["amb"].flatten(),
 
             all_lev = np.unique(lev[lev< 1.0e15]),
+            lev_type = level_type,
+            file_type = 'ods'
         )
         return obj
     
-    #Subfunction for turning array of seconds after epoch into single datetime object
+    #Create a mask to keep data with a unique kt and kx
+    def _kt_kx_mask(self, obj: ObservationData, varname: str, kx: int) -> np.ndarray:
+        kt = VARNAME_TO_KT.get(varname)
+        valid_mask = ((obj.kt == kt)
+                      & (obj.kx == kx))
+        return valid_mask
+    
+    def _filter_kt_and_kx(self, obj: ObservationData, mask: np.ndarray) -> ObservationData:
+        obj = apply_filter(obj, mask)
+        return obj
+
+    #Subfunction for parsing filename to provide a datetime object
     def _parse_datetime_from_filename(self, filename: str) -> datetime:
         base = os.path.basename(filename)
 
@@ -79,12 +98,18 @@ class ODSReader:
         return dt.replace(tzinfo=timezone.utc)    
 
     #Main reading method to be used to load and process ODS files
-    def read(self, filename: str) -> ObservationData:
+    def read(self, filename: str, varname: str, kx: int) -> ObservationData:
         nc = self._open_file(filename)
         raw = self._load_variables(nc)
         raw = self._calc_variables(raw)
-        obj = self._flatten_data(raw)
+        obj = self._flatten_data(raw, varname)
+        kt_mask = self._kt_kx_mask(obj, varname, kx)
+        obj = self._filter_kt_and_kx(obj, kt_mask)
         dt = self._parse_datetime_from_filename(filename)
-        obj = replace(obj, datetime=dt)
+        single_kt = obj.kt[0]
+        single_kx = obj.kx[0]
+        obj = replace(obj, datetime=dt, kx = single_kx, kt = single_kt)
+        
+        
 
         return obj

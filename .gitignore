@@ -21,6 +21,5 @@ resources/
 hacky\ code/
 data/
 # python/test.py
-python/amsua_metop-b.20260125T150000Z.nc4
-python/x0050.diag_amsua_n19.20230801_00z.ods
+
 python/ioda_prs.binned.py

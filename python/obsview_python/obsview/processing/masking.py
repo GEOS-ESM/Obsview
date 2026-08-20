@@ -2,30 +2,23 @@
 import numpy as np
 from ..loading.observationdata import ObservationData
 
-#This should be for data that is valid, not necessarily passes qc
-#TODO: Make choosing observation types(kt) happen elsewhere
-def valid_mask(data: ObservationData) -> np.ndarray: 
-    missing_val = 1.0e15
-    qc_missing_val = -127
-    valid_mask = (
-        (data.qc != qc_missing_val)              #Should be changed later for missing value
-        #& (data.sid == -999)        #Ditto
-        & (data.kt == 40)           #This should be omitted later
-        # & (data.lev < missing_val)
-        # & (data.omb < missing_val)
-        # & (data.oma < missing_val)
-        # & (data.amb < missing_val)
-    )
-    return valid_mask
 
 #This mask keeps data that isn't a missing value(same as valid_mask() but for data that contains specific fill values)
 def fill_val_mask(data:ObservationData) -> np.ndarray:
-    valid_mask = (
-        (data.qc < np.abs(data.fill_values['qc']))                             
-        & (data.omb < np.abs(data.fill_values['omb']))
-        & (data.oma < np.abs(data.fill_values['oma']))
-        & (data.sigo < np.abs(data.fill_values['sigo']))
-    )    
+    if data.fill_values == None:
+        qc_fill_val = -127
+        fill_val = 1.0e15
+        valid_mask = (
+            (data.qc != qc_fill_val)
+            &(data.lev < fill_val)
+        )
+    else:
+        valid_mask = (
+            (data.qc < np.abs(data.fill_values['qc']))                             
+            & (data.omb < np.abs(data.fill_values['omb']))
+            & (data.oma < np.abs(data.fill_values['oma']))
+            & (data.sigo < np.abs(data.fill_values['sigo']))
+        )    
     return valid_mask
 
 

@@ -25,8 +25,10 @@ def create_bins(data: ObservationData) -> BinnedData:
 def create_pressure_bins(data: ObservationData) -> BinnedData:
     NUM_BINS = 18                 # Hardcoded for now
     LEVLIM = [1000.0, 0.1]        # [bottom, top] in hPa, hardcoded for now
-
-    pressure_hpa = data.lev / 100.0
+    if data.file_type == 'ioda':
+        pressure_hpa = data.lev / 100.0         #IODA has different units than ODS
+    else: 
+        pressure_hpa = data.lev
 
     bins = np.logspace(np.log10(LEVLIM[1]), np.log10(LEVLIM[0]), num=NUM_BINS)
 

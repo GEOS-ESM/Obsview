@@ -1,21 +1,34 @@
 #Module containing plotting functions to create the 4 pannel statistics plot
 import numpy as np
 import matplotlib.pyplot as plt
+from datetime import datetime
 
 from ..processing.binning import BinnedData
 from ..stats.statisticsdata import StatisticsData
 from ..stats.calc_stats import count_obs_per_bin
+from ..config import KX_TO_DATASRC, KT_TO_DATATYPE
 
-#TODO: Change y labels to reflect lev_type
 
 def plot_stats(pass_data: BinnedData, fail_data: BinnedData, stats: StatisticsData):
     """
     4-panel statistics figure. Y-axis scaling/labels adapt to the vertical
     level type ('channel' or 'pressure') carried by the data.
     """
-    lev_type = pass_data.data.lev_type   # single source of truth
+    lev_type = pass_data.data.lev_type
+
+    data_src = KX_TO_DATASRC.get(pass_data.data.kx)
+    data_type =  KT_TO_DATATYPE.get(pass_data.data.kt)
+    file_type = pass_data.data.file_type
+    time = pass_data.data.datetime
+
+    title = f"{data_src} | {time.strftime('%d%b%Y %HZ')}"
+    title2 = f"{data_type} (from {file_type} file)"
+
 
     fig = plt.figure(figsize=(10, 7))
+    plt.suptitle(title, fontsize=16, fontweight="bold",y = 0.98, ha="center")
+    fig.text(0.5,0.91, title2, fontsize = 16, fontweight = "bold", color = "blue", ha = "center")
+    
 
     plt.subplot(2, 2, 1)
     _panel_nobs(pass_data, fail_data, stats, lev_type)
@@ -28,6 +41,7 @@ def plot_stats(pass_data: BinnedData, fail_data: BinnedData, stats: StatisticsDa
 
     plt.subplot(2, 2, 4)
     _panel_sigo(pass_data, stats, lev_type)
+    plt.subplots_adjust(top = 0.82)
 
     return fig
 

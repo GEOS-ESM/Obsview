@@ -4,6 +4,7 @@ from netCDF4 import Dataset
 from dataclasses import replace
 from datetime import datetime, timezone
 from .observationdata import ObservationData
+from ..config import VARNAME_TO_KT
 
 
 class IODAReader:
@@ -21,7 +22,7 @@ class IODAReader:
         nc.set_auto_mask(False)
         return nc
     #Load data and flatten incoming arrays
-    def _load_data(self, nc: Dataset, varname: str) -> dict: 
+    def _load_data(self, nc: Dataset, varname: str, kx: int) -> dict: 
         lev_type = self._get_lev_type(varname)
         n_locations = np.size(nc.variables["Location"][:])
 
@@ -33,9 +34,9 @@ class IODAReader:
         "qc": nc.groups["EffectiveQC0"].variables[varname][:].flatten(),
         "datetime": nc.groups["MetaData"].variables["dateTime"][:].flatten(),
 
-        #TODO: Change these to not be hardcoded
-        "sid": 326,     #SID for Amsua Metop-B satellite, change later using config/rc file
-        "kt": 40       
+        
+        "kx": kx,     #No better way to retrieve kx/sid for now
+        "kt": VARNAME_TO_KT.get(varname)       
         }
 
     #Level-type specific variables 
@@ -120,20 +121,21 @@ class IODAReader:
             lat = raw["lat"],
             lon = raw["lon"],
             kt = raw["kt"],
-            sid = raw["sid"],
+            kx = raw["kx"],
             amb = raw["amb"],
             all_lev= raw["all_lev"],
             fill_values = fill_values,
-            lev_type = level_type 
+            lev_type = level_type,
+            file_type = 'ioda' 
         )
         return obj
         ...
 
     
-    def read(self, filename: str, varname: str) -> ObservationData:
+    def read(self, filename: str, varname: str, kx: int) -> ObservationData:
 
         nc = self._open_file(filename)
-        raw = self._load_data(nc, varname)
+        raw = self._load_data(nc, varname, kx)
         raw = self._calc_variables(raw)
         fill_values = self._load_fill_values(nc, varname)
         obj = self._create_data_object(raw, fill_values, varname)

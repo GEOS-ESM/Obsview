@@ -26,7 +26,7 @@ class ObservationData:
     #error
     #scale
     kt: Optional[np.ndarray]
-    sid: Optional[np.ndarray]
+    kx: Optional[np.ndarray]       #sid for IODA files
     #calculated variables
     amb: Optional[np.ndarray]
     job: Optional[np.ndarray] = None
@@ -38,12 +38,10 @@ class ObservationData:
     all_lev: Optional[np.ndarray] = None
     fill_values: Optional[dict] = None
     datetime: Optional[object] = None
+    file_type: Optional[str] = None     #'ods' or 'ioda'
     
 
 
-#For loading multiple files
-@dataclass
-class ObservationDataset:
     #def concatenate()
     #def filter()
     #def group by time()
