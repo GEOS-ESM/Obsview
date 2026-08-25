@@ -1,5 +1,6 @@
 #Module containing BinnedData object as well as functions to create bins and sort data by level
 import numpy as np
+from typing import Optional, List
 from dataclasses import dataclass
 from ..loading.observationdata import ObservationData
 from .filtering import apply_filter
@@ -8,10 +9,23 @@ from .filtering import apply_filter
 class BinnedData:
     data: ObservationData           #Rearranged data by bin
     bin_centers: np.ndarray         #Averaged value between bin levels (used for plotting)
-    bin_indices: np.ndarray         
+           
     bin_labels: np.ndarray          #Array of each bin level (unique)
     bin_heights: np.ndarray
-    #level_type: str (pressure or channel) 
+    bin_indices: Optional[np.ndarray] = None   
+    #This should eventually replace the large ObservationData attribute
+    nobs: Optional[np.ndarray] = None       #array with number of observations (int) for each vertical level 
+    is_ts: Optional[bool] = None         #For plotting, tells us if the binned data came from a time series object
+    ts_range: Optional[List[object]] = None   #For plotting, gives start and end datetimes
+
+
+
+
+
+
+
+
+
 
 def create_bins(data: ObservationData) -> BinnedData:
     if data.lev_type == "channel":

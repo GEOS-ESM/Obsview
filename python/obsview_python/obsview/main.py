@@ -15,6 +15,7 @@ from .processing.filtering import apply_filter
 from .processing.derived import calc_derived
 from .processing.binning import create_bins
 from .stats.calc_stats import calculate_stats
+from .stats.aggregate import aggregate_stats, aggregate_pass_binned, aggregate_fail_binned
 from .plotting.statsplot import plot_stats
 from .plotting.spatialcoverage import plot_coverage
 from .plotting.timeseries import plot_series
@@ -250,39 +251,24 @@ def make_map_plot(filename: str, varname: str, kx: int) -> None:
 
 
 def main() -> None:
-    filename = "python/data/ODS files/conv/j54rp1.diag_conv.20260201_00z.ods"
-    varname = "windEastward"
-    kx = 220
+    tarpath = "/Users/ltrayano/Desktop/Obsview/Obsview/python/data/IODA files"
+    instrument = "atms_n20"
+    varname = "brightnessTemperature"
+    kx = 920
+    starttime = "2026010100"
+    endtime = "2026013118"
 
-    reader = ODSReader()
-    data = reader.read(filename, varname, kx)
 
-    #masking
-    val_mask = fill_val_mask(data)
+    ts = build_ts_from_tar(tarpath, instrument, varname, kx)
     
-    #filtering
-    valid_data = apply_filter(data, val_mask)
-        
-    #QC masking
-    pass_mask = qc_pass_mask(valid_data)
-    fail_mask = qc_fail_mask(valid_data)
-    pass_data = apply_filter(valid_data, pass_mask)
-    fail_data = apply_filter(valid_data, fail_mask)
-
-        #calculate job, joa, esigo, esigb
-    pass_data = calc_derived(pass_data)                 #Only calculate variables for QC = 0 data
-
-        #binning
-    pass_data_binned = create_bins(pass_data)
-    fail_data_binned = create_bins(fail_data)
-        #stats
-    pass_stats_binned = calculate_stats(pass_data_binned)
-
-    stats_plot = plot_stats(pass_data_binned,fail_data_binned,pass_stats_binned)
-
+    #ts_plot = plot_series(ts)
     
+    ag_stats = aggregate_stats(ts,starttime, endtime)
+    ag_pass_binned = aggregate_pass_binned(ts, starttime, endtime)
+    ag_fail_binned = aggregate_fail_binned(ts, starttime, endtime)
+
+    stats_plot = plot_stats(ag_pass_binned,ag_fail_binned,ag_stats)
     plt.show()
-    
 
 
     

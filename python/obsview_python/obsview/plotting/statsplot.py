@@ -19,9 +19,15 @@ def plot_stats(pass_data: BinnedData, fail_data: BinnedData, stats: StatisticsDa
     data_src = KX_TO_DATASRC.get(pass_data.data.kx)
     data_type =  KT_TO_DATATYPE.get(pass_data.data.kt)
     file_type = pass_data.data.file_type
-    time = pass_data.data.datetime
-
-    title = f"{data_src} | {time.strftime('%d%b%Y %HZ')}"
+    #For plotting single time or time range
+    if pass_data.is_ts:
+        starttime = pass_data.ts_range[0]
+        endtime = pass_data.ts_range[1]
+        title = f"{data_src} | {starttime.strftime('%d%b%Y %HZ')} - {endtime.strftime('%d%b%Y %HZ')}"
+    else:
+        time = pass_data.data.datetime
+        title = f"{data_src} | {time.strftime('%d%b%Y %HZ')}"
+    
     title2 = f"{data_type} (from {file_type} file)"
 
 
@@ -46,16 +52,16 @@ def plot_stats(pass_data: BinnedData, fail_data: BinnedData, stats: StatisticsDa
     return fig
 
 
-def _panel_nobs(pass_data, fail_data, stats, lev_type):
+def _panel_nobs(pass_data: BinnedData, fail_data: BinnedData, stats: StatisticsData, lev_type):
     bin_centers = pass_data.bin_centers
     bin_heights = pass_data.bin_heights
     bar_width = bin_heights * 0.8   # single overlapping bar per level
 
     # Fail counts per bin (fail_data has no StatisticsData).
     n_bins = len(fail_data.bin_labels)
-    fail_nobs = np.bincount(fail_data.bin_indices, minlength=n_bins)
+    fail_nobs = fail_data.nobs
 
-    for i in range(len(bin_centers)):
+    for i in range(len(bin_centers)):       #For each level...
         y = bin_centers[i]
         # Red (not used) underneath.
         plt.barh(y, fail_nobs[i], height=bar_width[i],

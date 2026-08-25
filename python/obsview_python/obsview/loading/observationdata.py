@@ -14,21 +14,21 @@ class Metadata:
 
 @dataclass
 class ObservationData:
-    obs: np.ndarray
-    omb: np.ndarray
-    oma: np.ndarray
-    sigo: np.ndarray
-    qc: np.ndarray
-    lev: np.ndarray
+    obs: Optional[np.ndarray] = None
+    omb: Optional[np.ndarray] = None
+    oma: Optional[np.ndarray] = None
+    sigo: Optional[np.ndarray] = None
+    qc: Optional[np.ndarray] = None
+    lev: Optional[np.ndarray] = None
 
-    lat: Optional[np.ndarray] 
-    lon: Optional[np.ndarray]
+    lat: Optional[np.ndarray] = None
+    lon: Optional[np.ndarray] = None
     #error
     #scale
-    kt: Optional[np.ndarray]
-    kx: Optional[np.ndarray]       #sid for IODA files
+    kt: Optional[np.ndarray] = None
+    kx: Optional[np.ndarray]  = None     #sid for IODA files
     #calculated variables
-    amb: Optional[np.ndarray]
+    amb: Optional[np.ndarray] = None
     job: Optional[np.ndarray] = None
     joa: Optional[np.ndarray] = None
     esigo: Optional[np.ndarray] = None
