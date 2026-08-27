@@ -32,6 +32,7 @@ class ODSReader:
             "omb": nc.variables['omf'][:],
             "oma": nc.variables['oma'][:],
             "sigo": nc.variables['xvec'][:],
+            "bias": nc.variables['xm'][:],
             "qc": nc.variables['qcexcl'][:],
             "lev": nc.variables['lev'][:],
             "kt": nc.variables['kt'][:],
@@ -45,8 +46,10 @@ class ODSReader:
     def _calc_variables(self, raw: dict) -> dict:
         #Calculate
         amb = raw["omb"] - raw["oma"]
+        omb_no_bias = raw["omb"] + raw['bias']
         #Append
         raw["amb"] = amb
+        raw["omb_no_bias"] = omb_no_bias
         return raw
 
     #Flatten data, return ObservationData object
@@ -67,6 +70,7 @@ class ODSReader:
             kx = raw["kx"].flatten(),
 
             amb = raw["amb"].flatten(),
+            omb_no_bias = raw["omb_no_bias"].flatten(),
 
             all_lev = np.unique(lev[lev< 1.0e15]),
             lev_type = level_type,

@@ -33,7 +33,7 @@ class IODAReader:
         "sigo": nc.groups["EffectiveError0"].variables[varname][:].flatten(),
         "qc": nc.groups["EffectiveQC0"].variables[varname][:].flatten(),
         "datetime": nc.groups["MetaData"].variables["dateTime"][:].flatten(),
-
+        "bias": nc.groups["ObsBias1"].variables[varname][:].flatten(),
         
         "kx": kx,     #No better way to retrieve kx/sid for now
         "kt": VARNAME_TO_KT.get(varname)       
@@ -63,8 +63,10 @@ class IODAReader:
     def _calc_variables(self, raw: dict) -> dict:
         #Calculate
         amb = raw["omb"] - raw["oma"]
+        omb_no_bias = raw["omb"]+raw["bias"]
         #Append
         raw["amb"] = amb
+        raw["omb_no_bias"] = omb_no_bias
         return raw
     
     def _load_fill_values(self, nc: Dataset, varname: str) -> dict:
@@ -114,6 +116,7 @@ class IODAReader:
         obj = ObservationData(
             obs = raw["obs"],
             omb = raw["omb"],
+            omb_no_bias = raw["omb_no_bias"],
             oma = raw["oma"],
             sigo = raw["sigo"],
             qc = raw["qc"],

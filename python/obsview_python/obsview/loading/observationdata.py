@@ -16,9 +16,11 @@ class Metadata:
 class ObservationData:
     obs: Optional[np.ndarray] = None
     omb: Optional[np.ndarray] = None
+    omb_no_bias: Optional[np.ndarray] = None
     oma: Optional[np.ndarray] = None
     sigo: Optional[np.ndarray] = None
     qc: Optional[np.ndarray] = None
+    bias: Optional[np.ndarray] = None
     lev: Optional[np.ndarray] = None
 
     lat: Optional[np.ndarray] = None

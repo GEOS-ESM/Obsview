@@ -19,6 +19,7 @@ from .stats.aggregate import aggregate_stats, aggregate_pass_binned, aggregate_f
 from .plotting.statsplot import plot_stats
 from .plotting.spatialcoverage import plot_coverage
 from .plotting.timeseries import plot_series
+from .plotting.radmon import plot_radmon
 
 
 
@@ -251,6 +252,7 @@ def make_map_plot(filename: str, varname: str, kx: int) -> None:
 
 
 def main() -> None:
+    filename = "python/data/IODA files/j54rp1.jedi_hofx.20260101_03z/atms_n20.20260101T030000Z.nc4"
     tarpath = "/Users/ltrayano/Desktop/Obsview/Obsview/python/data/IODA files"
     instrument = "atms_n20"
     varname = "brightnessTemperature"
@@ -258,19 +260,58 @@ def main() -> None:
     starttime = "2026010100"
     endtime = "2026013118"
 
-
-    ts = build_ts_from_tar(tarpath, instrument, varname, kx)
+    reader = IODAReader()
+    data = reader.read(filename, varname, kx)
     
-    #ts_plot = plot_series(ts)
-    
-    ag_stats = aggregate_stats(ts,starttime, endtime)
-    ag_pass_binned = aggregate_pass_binned(ts, starttime, endtime)
-    ag_fail_binned = aggregate_fail_binned(ts, starttime, endtime)
 
-    stats_plot = plot_stats(ag_pass_binned,ag_fail_binned,ag_stats)
+    #masking
+    val_mask = fill_val_mask(data)
+    
+    #filtering
+    valid_data = apply_filter(data, val_mask)
+    
+
+    #QC masking
+    pass_mask = qc_pass_mask(valid_data)
+    fail_mask = qc_fail_mask(valid_data)
+
+
+    pass_data = apply_filter(valid_data, pass_mask)
+    fail_data = apply_filter(valid_data, fail_mask)
+
+    #calculate job, joa, esigo, esigb
+    pass_data = calc_derived(pass_data)                 #Only calculate variables for QC = 0 data
+
+    #binning
+    pass_data_binned = create_bins(pass_data)
+
+    radmon_plot = plot_radmon(pass_data_binned)
     plt.show()
 
 
+
+
+
+
+
+
+
+
+
+
+    # ts = build_ts_from_tar(tarpath, instrument, varname, kx)
+    
+    #ts_plot = plot_series(ts)
+    
+    # ag_stats = aggregate_stats(ts,starttime, endtime)
+    # ag_pass_binned = aggregate_pass_binned(ts, starttime, endtime)
+    # ag_fail_binned = aggregate_fail_binned(ts, starttime, endtime)
+
+    # stats_plot = plot_stats(ag_pass_binned,ag_fail_binned,ag_stats)
+    # plt.show()
+
+
+    
     
 
 
