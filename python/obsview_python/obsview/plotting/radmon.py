@@ -13,7 +13,7 @@ DEFAULT_CHANNEL = 18
 
 def plot_radmon(pass_data: BinnedData, channel: int = DEFAULT_CHANNEL):
     channel_mask = (pass_data.bin_indices == channel)
-    values = pass_data.data.omb_no_bias[channel_mask]
+    values = pass_data.data.omb[channel_mask]
     lons = pass_data.data.lon[channel_mask]
     lats = pass_data.data.lat[channel_mask]
     

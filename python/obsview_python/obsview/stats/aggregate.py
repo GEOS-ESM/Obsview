@@ -9,6 +9,7 @@ from ..loading.timeseriesdata import TimeSeriesData
 from .statisticsdata import StatisticsData
 from ..processing.binning import BinnedData
 
+#TODO: Put this in utils.py
 #Create datetime object from string formatted like Matlab version:
 # expected string format: 'YYYYMMDDHH', example: '2026010100'
 def str_to_datetime(datetime_str:str) -> datetime:

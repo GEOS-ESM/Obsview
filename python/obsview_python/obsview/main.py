@@ -15,11 +15,12 @@ from .processing.filtering import apply_filter
 from .processing.derived import calc_derived
 from .processing.binning import create_bins
 from .stats.calc_stats import calculate_stats
-from .stats.aggregate import aggregate_stats, aggregate_pass_binned, aggregate_fail_binned
+from .stats.aggregate import str_to_datetime, aggregate_stats, aggregate_pass_binned, aggregate_fail_binned
 from .plotting.statsplot import plot_stats
 from .plotting.spatialcoverage import plot_coverage
 from .plotting.timeseries import plot_series
 from .plotting.radmon import plot_radmon
+from. plotting.compare_statsplot import plot_compare_stats
 
 
 
@@ -55,6 +56,35 @@ def extract_member_path(tar: tarfile.TarFile, member: tarfile.TarInfo, dest_dir:
     return extracted
 
     ...
+
+#TODO: Make module for searching experiment directories and finding specific tar files for comparing experiments
+def experiment_tar_dir(base_path: str, expid: str, dt: str) -> str:
+    """
+    Build the tarball directory for one experiment and a given datetime.
+
+    Layout: <base_path>/<expid>/jedi/obs/Y<YYYY>/M<MM>/
+
+    Parameters
+    ----------
+    base_path : str
+        Absolute path to the directory containing experiment folders.
+    expid : str
+        Experiment id, e.g. 'j54rp1'.
+    dt : str
+        Expected string format: 'YYYYMMDDHH', example: '2026010100'
+    """
+    dt = str_to_datetime(dt)
+    
+    if not os.path.isabs(base_path):
+        raise ValueError(f"base_path must be absolute: {base_path!r}")
+
+    year_dir = f"Y{dt.year:04d}"
+    month_dir = f"M{dt.month:02d}"
+    tar_dir = os.path.join(base_path, expid, "jedi", "obs", year_dir, month_dir)
+
+    if not os.path.isdir(tar_dir):
+        raise FileNotFoundError(f"Experiment tar directory not found: {tar_dir!r}")
+    return tar_dir
 
 
 
@@ -252,7 +282,7 @@ def make_map_plot(filename: str, varname: str, kx: int) -> None:
 
 
 def main() -> None:
-    filename = "python/data/IODA files/j54rp1.jedi_hofx.20260101_03z/atms_n20.20260101T030000Z.nc4"
+    filename = "python/data/ODS files/radiance/j54rp1.diag_atms_n20.20260101_00z.ods"
     tarpath = "/Users/ltrayano/Desktop/Obsview/Obsview/python/data/IODA files"
     instrument = "atms_n20"
     varname = "brightnessTemperature"
@@ -260,56 +290,102 @@ def main() -> None:
     starttime = "2026010100"
     endtime = "2026013118"
 
-    reader = IODAReader()
+    reader = ODSReader()
     data = reader.read(filename, varname, kx)
     
-
     #masking
     val_mask = fill_val_mask(data)
-    
+
+    #ts_plot = plot_series(ts)
     #filtering
     valid_data = apply_filter(data, val_mask)
+
     
 
+    
     #QC masking
     pass_mask = qc_pass_mask(valid_data)
     fail_mask = qc_fail_mask(valid_data)
 
 
     pass_data = apply_filter(valid_data, pass_mask)
-    fail_data = apply_filter(valid_data, fail_mask)
+    
 
     #calculate job, joa, esigo, esigb
     pass_data = calc_derived(pass_data)                 #Only calculate variables for QC = 0 data
 
     #binning
-    pass_data_binned = create_bins(pass_data)
+    pass_data_binned = create_bins(data)
 
     radmon_plot = plot_radmon(pass_data_binned)
     plt.show()
 
-
-
-
-
-
-
-
-
-
-
-
-    # ts = build_ts_from_tar(tarpath, instrument, varname, kx)
     
-    #ts_plot = plot_series(ts)
-    
-    # ag_stats = aggregate_stats(ts,starttime, endtime)
-    # ag_pass_binned = aggregate_pass_binned(ts, starttime, endtime)
-    # ag_fail_binned = aggregate_fail_binned(ts, starttime, endtime)
 
-    # stats_plot = plot_stats(ag_pass_binned,ag_fail_binned,ag_stats)
+    
+
+
+
+
+
+    # filepath1 = "python/data/IODA files/j54rp1/jedi/obs/Y2026/M01/j54rp1.jedi_hofx.20260101_03z/atms_n20.20260101T030000Z.nc4"
+    # filepath2 = "python/data/IODA files/j54rp2/jedi/obs/Y2026/M01/j54rp2.jedi_hofx.20260101_03z/atms_n20.20260101T030000Z.nc4"
+    # instrument = "atms_n20"
+    # varname = "brightnessTemperature"
+    # kx = 920
+    # starttime = "2026010100"
+    # endtime = "2026013118"
+
+    # exp1 = "j54rp1"
+    # exp2 = "j54rp2"
+
+    # reader = IODAReader()
+    # #File 1
+    # data = reader.read(filepath1, varname, kx)
+    # val_mask = fill_val_mask(data)    
+    #             #filtering
+    # valid_data = apply_filter(data, val_mask)         
+    #             #QC masking
+    # pass_mask = qc_pass_mask(valid_data)       
+    # pass_data = apply_filter(valid_data, pass_mask)
+
+    #             #calculate job, joa, esigo, esigb
+    # pass_data = calc_derived(pass_data)                 
+    #             #binning
+    # pass_data1_binned = create_bins(pass_data)          
+    #             #stats
+    # pass_stats1_binned = calculate_stats(pass_data1_binned)
+
+    # #File 2
+    # data = reader.read(filepath2, varname, kx)
+    # val_mask = fill_val_mask(data)    
+    #             #filtering
+    # valid_data = apply_filter(data, val_mask)         
+    #             #QC masking
+    # pass_mask = qc_pass_mask(valid_data)       
+    # pass_data = apply_filter(valid_data, pass_mask)
+
+    #             #calculate job, joa, esigo, esigb
+    # pass_data = calc_derived(pass_data)                 
+    #             #binning
+    # pass_data2_binned = create_bins(pass_data)          
+    #             #stats
+    # pass_stats2_binned = calculate_stats(pass_data2_binned)
+
+    # compare_plot = plot_compare_stats(pass_data1_binned, pass_stats1_binned, pass_stats2_binned)
     # plt.show()
 
+
+
+
+
+
+
+
+
+
+
+    
 
     
     

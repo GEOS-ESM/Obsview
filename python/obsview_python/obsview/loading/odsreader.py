@@ -65,6 +65,7 @@ class ODSReader:
             lev = lev,
             lat = raw["lat"].flatten(),
             lon = raw['lon'].flatten(),
+            bias = raw["bias"].flatten(),
 
             kt = raw["kt"].flatten(),
             kx = raw["kx"].flatten(),

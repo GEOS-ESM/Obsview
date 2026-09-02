@@ -33,11 +33,11 @@ class IODAReader:
         "sigo": nc.groups["EffectiveError0"].variables[varname][:].flatten(),
         "qc": nc.groups["EffectiveQC0"].variables[varname][:].flatten(),
         "datetime": nc.groups["MetaData"].variables["dateTime"][:].flatten(),
-        "bias": nc.groups["ObsBias1"].variables[varname][:].flatten(),
-        
+        "bias": nc.groups["ObsBias0"].variables[varname][:].flatten(),
         "kx": kx,     #No better way to retrieve kx/sid for now
         "kt": VARNAME_TO_KT.get(varname)       
         }
+        
 
     #Level-type specific variables 
         if lev_type == 'pressure':
@@ -116,6 +116,7 @@ class IODAReader:
         obj = ObservationData(
             obs = raw["obs"],
             omb = raw["omb"],
+            bias = raw["bias"],
             omb_no_bias = raw["omb_no_bias"],
             oma = raw["oma"],
             sigo = raw["sigo"],
