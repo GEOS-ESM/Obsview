@@ -21,6 +21,7 @@ from .plotting.spatialcoverage import plot_coverage
 from .plotting.timeseries import plot_series
 from .plotting.radmon import plot_radmon
 from. plotting.compare_statsplot import plot_compare_stats
+from .plotting.purple import plot_purple
 
 
 
@@ -282,112 +283,27 @@ def make_map_plot(filename: str, varname: str, kx: int) -> None:
 
 
 def main() -> None:
-    filename = "python/data/ODS files/radiance/j54rp1.diag_atms_n20.20260101_00z.ods"
-    tarpath = "/Users/ltrayano/Desktop/Obsview/Obsview/python/data/IODA files"
+    ctl = "x0053RPY"
+    exp = "x0054"
+    
     instrument = "atms_n20"
     varname = "brightnessTemperature"
     kx = 920
     starttime = "2026010100"
-    endtime = "2026013118"
+    endtime = "2026010118"
 
-    reader = ODSReader()
-    data = reader.read(filename, varname, kx)
+    filenames_ctl = sorted(glob.glob(f"python/data/ODS files/{ctl}/{ctl}.diag_atms_n20.*.ods"))
+    filenames_exp = sorted(glob.glob(f"python/data/ODS files/{exp}/{exp}.diag_atms_n20.*.ods"))
+
+    ts_ctl = build_ts_from_ods(filenames_ctl,varname,kx)
+    ts_exp = build_ts_from_ods(filenames_exp,varname,kx)
+
+    ctl_bins = aggregate_pass_binned(ts_ctl,starttime,endtime)
+    ctl_stats = aggregate_stats(ts_ctl,starttime,endtime)
+    exp_stats = aggregate_stats(ts_exp,starttime,endtime)
     
-    #masking
-    val_mask = fill_val_mask(data)
-
-    #ts_plot = plot_series(ts)
-    #filtering
-    valid_data = apply_filter(data, val_mask)
-
-    
-
-    
-    #QC masking
-    pass_mask = qc_pass_mask(valid_data)
-    fail_mask = qc_fail_mask(valid_data)
-
-
-    pass_data = apply_filter(valid_data, pass_mask)
-    
-
-    #calculate job, joa, esigo, esigb
-    pass_data = calc_derived(pass_data)                 #Only calculate variables for QC = 0 data
-
-    #binning
-    pass_data_binned = create_bins(data)
-
-    radmon_plot = plot_radmon(pass_data_binned)
+    series_plot = plot_series(ts_ctl, channel=9)
     plt.show()
-
-    
-
-    
-
-
-
-
-
-    # filepath1 = "python/data/IODA files/j54rp1/jedi/obs/Y2026/M01/j54rp1.jedi_hofx.20260101_03z/atms_n20.20260101T030000Z.nc4"
-    # filepath2 = "python/data/IODA files/j54rp2/jedi/obs/Y2026/M01/j54rp2.jedi_hofx.20260101_03z/atms_n20.20260101T030000Z.nc4"
-    # instrument = "atms_n20"
-    # varname = "brightnessTemperature"
-    # kx = 920
-    # starttime = "2026010100"
-    # endtime = "2026013118"
-
-    # exp1 = "j54rp1"
-    # exp2 = "j54rp2"
-
-    # reader = IODAReader()
-    # #File 1
-    # data = reader.read(filepath1, varname, kx)
-    # val_mask = fill_val_mask(data)    
-    #             #filtering
-    # valid_data = apply_filter(data, val_mask)         
-    #             #QC masking
-    # pass_mask = qc_pass_mask(valid_data)       
-    # pass_data = apply_filter(valid_data, pass_mask)
-
-    #             #calculate job, joa, esigo, esigb
-    # pass_data = calc_derived(pass_data)                 
-    #             #binning
-    # pass_data1_binned = create_bins(pass_data)          
-    #             #stats
-    # pass_stats1_binned = calculate_stats(pass_data1_binned)
-
-    # #File 2
-    # data = reader.read(filepath2, varname, kx)
-    # val_mask = fill_val_mask(data)    
-    #             #filtering
-    # valid_data = apply_filter(data, val_mask)         
-    #             #QC masking
-    # pass_mask = qc_pass_mask(valid_data)       
-    # pass_data = apply_filter(valid_data, pass_mask)
-
-    #             #calculate job, joa, esigo, esigb
-    # pass_data = calc_derived(pass_data)                 
-    #             #binning
-    # pass_data2_binned = create_bins(pass_data)          
-    #             #stats
-    # pass_stats2_binned = calculate_stats(pass_data2_binned)
-
-    # compare_plot = plot_compare_stats(pass_data1_binned, pass_stats1_binned, pass_stats2_binned)
-    # plt.show()
-
-
-
-
-
-
-
-
-
-
-
-    
-
-    
     
 
 

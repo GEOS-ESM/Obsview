@@ -55,7 +55,9 @@ def aggregate_stats(ts: TimeSeriesData, start_time: str, end_time: str) -> Stati
         if datetime in ts.datetimes:    #If specific datetime from range is equal to one of the timeseries datetimes...
             nobs += ts.pass_stats[ts.datetimes.index(datetime)].nobs
             mean_omb =+ ts.pass_stats[ts.datetimes.index(datetime)].mean_omb
-            rms_omb += ts.pass_stats[ts.datetimes.index(datetime)].rms_omb
+            rms_omb += (ts.pass_stats[ts.datetimes.index(datetime)].rms_omb)**2
+            
+            
             mean_oma += ts.pass_stats[ts.datetimes.index(datetime)].mean_oma
             rms_oma += ts.pass_stats[ts.datetimes.index(datetime)].rms_oma
             mean_job += ts.pass_stats[ts.datetimes.index(datetime)].mean_job
@@ -64,10 +66,11 @@ def aggregate_stats(ts: TimeSeriesData, start_time: str, end_time: str) -> Stati
             mean_esigo += ts.pass_stats[ts.datetimes.index(datetime)].mean_esigo
             mean_esigb += ts.pass_stats[ts.datetimes.index(datetime)].mean_esigb
 
+    
     #Calculate time averaged variables
     avg_nobs = nobs/dt_count
     avg_mean_omb = mean_omb/dt_count
-    avg_rms_omb = rms_omb/dt_count
+    avg_rms_omb = np.sqrt(rms_omb/dt_count)
     avg_mean_oma = mean_oma/dt_count
     avg_rms_oma = rms_oma/dt_count
     avg_mean_job = mean_job/dt_count
@@ -75,6 +78,7 @@ def aggregate_stats(ts: TimeSeriesData, start_time: str, end_time: str) -> Stati
     avg_mean_sigo = mean_sigo/dt_count
     avg_mean_esigo = mean_esigo/dt_count
     avg_mean_esigb = mean_esigb/dt_count
+    
     
     #Assign time averaged variables to StatisticsData attibutes
 
