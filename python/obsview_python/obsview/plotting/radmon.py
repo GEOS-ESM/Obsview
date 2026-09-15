@@ -11,7 +11,7 @@ from ..config import KX_TO_DATASRC, KT_TO_DATATYPE
 
 DEFAULT_CHANNEL = 18
 
-def plot_radmon(pass_data: BinnedData, channel: int = DEFAULT_CHANNEL):
+def plot_radmon(pass_data: BinnedData, channel: int = DEFAULT_CHANNEL):     #TODO: Change pass data to just data
     channel_mask = (pass_data.bin_indices == channel)
     values = pass_data.data.omb[channel_mask]
     lons = pass_data.data.lon[channel_mask]
@@ -37,8 +37,9 @@ def plot_radmon(pass_data: BinnedData, channel: int = DEFAULT_CHANNEL):
     data_type =  KT_TO_DATATYPE.get(pass_data.data.kt)
     file_type = pass_data.data.file_type
     time = time = pass_data.data.datetime
-
-    title = f"{data_src}\n {time.strftime('%d%b%Y %HZ')}\n All Observations, Channel {channel} 183.310 GHz"
+    exp = pass_data.data.exp
+    #exp = "j54rp1"
+    title = f"Exp: {exp} | {time.strftime('%d%b%Y %HZ')}\n {data_src} - {data_type}\n All Observations, Channel {channel} 183.310 GHz"
 
     plt.title(title, fontsize=12, pad=12,multialignment='center')
 

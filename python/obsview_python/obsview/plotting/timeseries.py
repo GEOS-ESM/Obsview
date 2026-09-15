@@ -6,6 +6,7 @@ import calendar
 from datetime import datetime, timezone, timedelta
 
 from ..loading.timeseriesdata import TimeSeriesData
+from ..config import KX_TO_DATASRC, KT_TO_DATATYPE
 
 SERIES_CHANNEL = 12
 SERIES_TITLE = "ATMS N20 brightness temperatures: channel 12 (Global)"
@@ -40,7 +41,6 @@ def _channel_index(ts: TimeSeriesData, channel: int) -> int:
 
 def plot_series(ts: TimeSeriesData,
                 channel: int = SERIES_CHANNEL,
-                title: str = SERIES_TITLE,
                 start: datetime = None,
                 end: datetime = None):
     """
@@ -57,6 +57,11 @@ def plot_series(ts: TimeSeriesData,
         month containing the earliest datetime in `ts`.
     """
     ci = _channel_index(ts, channel)
+    data_src = KX_TO_DATASRC.get(ts.pass_data[0].data.kx)
+    data_type =  KT_TO_DATATYPE.get(ts.pass_data[0].data.kt)
+    starttime = ts.pass_data[0].ts_range[0]
+    endtime = ts.pass_data[0].ts_range[1]
+    region = "Global"
 
     # Full time range for the x-axis (independent of how many files exist).
     if start is None or end is None:
@@ -65,7 +70,13 @@ def plot_series(ts: TimeSeriesData,
         end = end or default_end
 
     fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(11, 8), sharex=True)
-    fig.suptitle(title, fontsize=13, fontweight="bold", color="blue")
+    
+    title = f"Exp: {ts.pass_data[0].data.exp} | {starttime.strftime('%d%b%Y %HZ')} - {endtime.strftime('%d%b%Y %HZ')}"
+    title2 = f"{data_src} - {data_type}: channel: {channel} ({region})"
+
+
+    plt.suptitle(title, fontsize=16, fontweight="bold",y = 0.98, ha="center")
+    fig.text(0.5,0.91, title2, fontsize = 16, fontweight = "bold", color = "blue", ha = "center")
 
     times = ts.datetimes
 
@@ -84,6 +95,7 @@ def plot_series(ts: TimeSeriesData,
     fig.autofmt_xdate(rotation=0, ha="center")
 
     plt.tight_layout(rect=[0, 0, 1, 0.95])
+    plt.subplots_adjust(top = 0.82)
     return fig
 
 

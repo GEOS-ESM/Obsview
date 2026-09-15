@@ -23,12 +23,12 @@ def plot_stats(pass_data: BinnedData, fail_data: BinnedData, stats: StatisticsDa
     if pass_data.is_ts:
         starttime = pass_data.ts_range[0]
         endtime = pass_data.ts_range[1]
-        title = f"{data_src} | {starttime.strftime('%d%b%Y %HZ')} - {endtime.strftime('%d%b%Y %HZ')}"
+        title = f"Exp: {pass_data.data.exp} | {starttime.strftime('%d%b%Y %HZ')} - {endtime.strftime('%d%b%Y %HZ')}"
     else:
         time = pass_data.data.datetime
-        title = f"{data_src} | {time.strftime('%d%b%Y %HZ')}"
+        title = f"Exp: {pass_data.data.exp} | {time.strftime('%d%b%Y %HZ')}"
     
-    title2 = f"{data_type} (from {file_type} file)"
+    title2 = f"{data_src} - {data_type}"
 
 
     fig = plt.figure(figsize=(10, 7))

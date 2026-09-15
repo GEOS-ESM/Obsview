@@ -2,6 +2,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from typing import List, Optional
+from pathlib import Path
+from dataclasses import replace
 import glob
 import os
 import tarfile
@@ -140,13 +142,15 @@ def build_ts_from_ioda(filenames: List[str], varname: str, kx: int) -> TimeSerie
     ...
 
 
-def build_ts_from_tar(tar_path: str, instrument: str, varname: str, kx: int) -> TimeSeriesData:
+def build_ts_from_tar(tar_path: str, instrument: str, varname: str, kx: int, start_time:str, end_time: str) -> TimeSeriesData:
     tar_file_paths = sorted(glob.glob(os.path.join(tar_path, "*.tar")))
     records = []
     reader = IODAReader()
-
+    starttime = str_to_datetime(start_time)
+    endtime = str_to_datetime(end_time)
     #Loop through tar files
     for tar_file_path in tar_file_paths:
+        exp_name = Path(tar_file_path).name.split(".",1)[0]
         with tarfile.open(tar_file_path, mode = "r:*") as tar:
             member = find_instrument_member(tar, instrument)
             if member == None:      #If instrument file is missing...
@@ -154,6 +158,7 @@ def build_ts_from_tar(tar_path: str, instrument: str, varname: str, kx: int) -> 
             with tempfile.TemporaryDirectory() as tmp:
                 nc_path = extract_member_path(tar, member, tmp)
                 data = reader.read(nc_path,varname, kx)
+                data = replace(data, exp = exp_name)
                 #masking
                 val_mask = fill_val_mask(data)
             
@@ -171,6 +176,7 @@ def build_ts_from_tar(tar_path: str, instrument: str, varname: str, kx: int) -> 
 
                 #binning
                 pass_data_binned = create_bins(pass_data)
+                pass_data_binned = replace(pass_data_binned, ts_range = [starttime, endtime])
                 fail_data_binned = create_bins(fail_data)
                 #stats
                 pass_stats_binned = calculate_stats(pass_data_binned)      #Only calculate stats on QC = 0 data
@@ -197,9 +203,11 @@ def build_ts_from_tar(tar_path: str, instrument: str, varname: str, kx: int) -> 
     return obj
 
 
-def build_ts_from_ods(filenames: List[str], varname, kx) -> TimeSeriesData:
+def build_ts_from_ods(filenames: List[str], varname, kx, start_time: str, end_time: str) -> TimeSeriesData:
     reader = ODSReader()
     records = []        #List to append relevant contents of each file to
+    starttime = str_to_datetime(start_time)
+    endtime = str_to_datetime(end_time)
 
     for fname in filenames:
         data = reader.read(fname, varname, kx)
@@ -220,6 +228,7 @@ def build_ts_from_ods(filenames: List[str], varname, kx) -> TimeSeriesData:
 
         #binning
         pass_data_binned = create_bins(pass_data)
+        pass_data_binned = replace(pass_data_binned, ts_range = [starttime, endtime])
         fail_data_binned = create_bins(fail_data)
         #stats
         pass_stats_binned = calculate_stats(pass_data_binned)      #Only calculate stats on QC = 0 data
@@ -283,26 +292,36 @@ def make_map_plot(filename: str, varname: str, kx: int) -> None:
 
 
 def main() -> None:
-    ctl = "x0053RPY"
-    exp = "x0054"
     
+    
+    exp = "x0054"
+    tar_path = "/Users/ltrayano/Desktop/Obsview/Obsview/python/data/IODA files/j54rp1/jedi/obs/Y2026/M01"
+    ods_path = "python/data/ODS files/x0054/x0054.diag_atms_n20.20260131_00z.ods"
     instrument = "atms_n20"
     varname = "brightnessTemperature"
     kx = 920
     starttime = "2026010100"
-    endtime = "2026010118"
+    endtime = "2026012512"
 
-    filenames_ctl = sorted(glob.glob(f"python/data/ODS files/{ctl}/{ctl}.diag_atms_n20.*.ods"))
     filenames_exp = sorted(glob.glob(f"python/data/ODS files/{exp}/{exp}.diag_atms_n20.*.ods"))
 
-    ts_ctl = build_ts_from_ods(filenames_ctl,varname,kx)
-    ts_exp = build_ts_from_ods(filenames_exp,varname,kx)
+    print("Loading ODS...")
+    ts_ctl = build_ts_from_ods(filenames_exp,varname,kx, starttime, endtime)
+    print("Ods files loaded")
+    print("Loading IODA...")
+    ts_exp = build_ts_from_tar(tar_path,instrument,varname,kx,starttime, endtime)
+    print("IODA files loaded...")
 
-    ctl_bins = aggregate_pass_binned(ts_ctl,starttime,endtime)
-    ctl_stats = aggregate_stats(ts_ctl,starttime,endtime)
-    exp_stats = aggregate_stats(ts_exp,starttime,endtime)
+    ctl_ag_bins = aggregate_pass_binned(ts_ctl,starttime,endtime)
+    ctl_ag_stats = aggregate_stats(ts_ctl, starttime, endtime)
+    exp_ag_stats = aggregate_stats(ts_exp, starttime, endtime)
     
-    series_plot = plot_series(ts_ctl, channel=9)
+
+    # stats_plot = plot_stats(ag_pass, ag_fail, ag_stats)
+
+    # series_plot = plot_series(ts_exp, channel=9)
+
+    purple_plot = plot_purple(ctl_ag_bins,ctl_ag_stats,exp_ag_stats)
     plt.show()
     
 

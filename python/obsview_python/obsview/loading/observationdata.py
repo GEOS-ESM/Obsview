@@ -29,6 +29,7 @@ class ObservationData:
     #scale
     kt: Optional[np.ndarray] = None
     kx: Optional[np.ndarray]  = None     #sid for IODA files
+    exp: Optional[str] = None           #Experiment name
     #calculated variables
     amb: Optional[np.ndarray] = None
     job: Optional[np.ndarray] = None

@@ -56,10 +56,8 @@ def aggregate_stats(ts: TimeSeriesData, start_time: str, end_time: str) -> Stati
             nobs += ts.pass_stats[ts.datetimes.index(datetime)].nobs
             mean_omb =+ ts.pass_stats[ts.datetimes.index(datetime)].mean_omb
             rms_omb += (ts.pass_stats[ts.datetimes.index(datetime)].rms_omb)**2
-            
-            
             mean_oma += ts.pass_stats[ts.datetimes.index(datetime)].mean_oma
-            rms_oma += ts.pass_stats[ts.datetimes.index(datetime)].rms_oma
+            rms_oma += (ts.pass_stats[ts.datetimes.index(datetime)].rms_oma)**2
             mean_job += ts.pass_stats[ts.datetimes.index(datetime)].mean_job
             mean_joa += ts.pass_stats[ts.datetimes.index(datetime)].mean_joa
             mean_sigo += ts.pass_stats[ts.datetimes.index(datetime)].mean_sigo
@@ -72,7 +70,7 @@ def aggregate_stats(ts: TimeSeriesData, start_time: str, end_time: str) -> Stati
     avg_mean_omb = mean_omb/dt_count
     avg_rms_omb = np.sqrt(rms_omb/dt_count)
     avg_mean_oma = mean_oma/dt_count
-    avg_rms_oma = rms_oma/dt_count
+    avg_rms_oma = np.sqrt(rms_oma/dt_count)
     avg_mean_job = mean_job/dt_count
     avg_mean_joa = mean_joa/dt_count
     avg_mean_sigo = mean_sigo/dt_count
@@ -108,13 +106,15 @@ def aggregate_pass_binned(ts: TimeSeriesData, start_time:str, end_time: str) -> 
     kx = ts.pass_data[0].data.kx
     kt = ts.pass_data[0].data.kt
     file_type = ts.pass_data[0].data.file_type
+    exp = ts.pass_data[0].data.exp
 
     #Pass only the data that gets used for making statistics plot
     data = ObservationData(
         lev_type = lev_type,
         kx = kx,
         kt = kt,
-        file_type = file_type
+        file_type = file_type,
+        exp = exp
     )
     
     #For binned data object, aggregate:

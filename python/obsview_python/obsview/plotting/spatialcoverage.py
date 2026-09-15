@@ -4,21 +4,19 @@ import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 from ..processing.binning import BinnedData
+from ..config import KX_TO_DATASRC, KT_TO_DATATYPE
 
 # ---- Easily-changeable coverage settings (hardcoded for now) ----
 # Actual channel number to show on the MAP panel. Set to None to plot all
 # channels. (The count/bar panel always shows every channel regardless.)
-COVERAGE_MAP_CHANNEL = 15
+COVERAGE_MAP_CHANNEL = 7
 
-# Figure super-title: instrument/satellite + date/time. Hardcoded for now;
-# will later be pulled from IODA/ODS file metadata.
-COVERAGE_TITLE = "AMSU-A METOP-B  |  2026-01-25 15:00 UTC"
+
 
 
 def plot_coverage(pass_data: BinnedData,
                   fail_data: BinnedData,
-                  map_channel: int = COVERAGE_MAP_CHANNEL,
-                  title: str = COVERAGE_TITLE):
+                  map_channel: int = COVERAGE_MAP_CHANNEL):
     """
     Build the 2-panel coverage figure from the QC-pass and QC-fail
     BinnedData objects.
@@ -37,9 +35,18 @@ def plot_coverage(pass_data: BinnedData,
 
     Returns the matplotlib Figure so the caller can plt.show() or savefig().
     """
+    data_src = KX_TO_DATASRC.get(pass_data.data.kx)
+    data_type =  KT_TO_DATATYPE.get(pass_data.data.kt)
+    region = "Global"
     fig = plt.figure(figsize=(12, 10))
-    fig.suptitle(title, fontsize=14, fontweight="bold")
 
+    time = pass_data.data.datetime
+    title = f"Exp: {pass_data.data.exp} | {time.strftime('%d%b%Y %HZ')}"
+    title2 = f"{data_src} - {data_type}: channel: {map_channel} ({region})"
+
+
+    plt.suptitle(title, fontsize=16, fontweight="bold",y = 0.97, ha="center")
+    fig.text(0.5,0.91, title2, fontsize = 14, fontweight = "bold", color = "blue", ha = "center")
     gs = fig.add_gridspec(2, 1, height_ratios=[4, 1])
 
     # Map panel needs a cartopy projection axis.

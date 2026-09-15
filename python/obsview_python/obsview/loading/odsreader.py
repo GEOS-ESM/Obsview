@@ -5,6 +5,8 @@ import numpy as np
 from netCDF4 import Dataset
 from dataclasses import replace
 from datetime import datetime, timezone
+from pathlib import Path
+
 from .observationdata import ObservationData
 from ..config import VARNAME_TO_KT
 from ..processing.filtering import apply_filter
@@ -101,6 +103,11 @@ class ODSReader:
         # Build a UTC-aware datetime; strptime validates the calendar date.
         dt = datetime.strptime(date_str + hour_str, "%Y%m%d%H")
         return dt.replace(tzinfo=timezone.utc)    
+    
+    def _parse_exp_name_from_filename(self,filename: str) -> str:
+        exp_name = Path(filename).name.split(".",1)[0]
+        return exp_name
+        ...
 
     #Main reading method to be used to load and process ODS files
     def read(self, filename: str, varname: str, kx: int) -> ObservationData:
@@ -113,7 +120,8 @@ class ODSReader:
         dt = self._parse_datetime_from_filename(filename)
         single_kt = obj.kt[0]
         single_kx = obj.kx[0]
-        obj = replace(obj, datetime=dt, kx = single_kx, kt = single_kt)
+        exp = self._parse_exp_name_from_filename(filename)
+        obj = replace(obj, datetime=dt, kx = single_kx, kt = single_kt, exp = exp)
         
         
 

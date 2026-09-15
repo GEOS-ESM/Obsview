@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 from ..processing.binning import BinnedData
 from ..stats.statisticsdata import StatisticsData
-
+from ..config import KX_TO_DATASRC, KT_TO_DATATYPE
 
 
 
@@ -83,9 +83,23 @@ def plot_purple(ctl_bins: BinnedData, ctl_stats: StatisticsData, exp_stats:Stati
         ax1.axhline(channel, color='gray', linestyle=':', linewidth=0.5, alpha=0.5)
 
     #Title
-    title = f"x0053RPY (ctl) vs. x0054 (exp)\nComparison of mean and rms: O-B"
-    plt.suptitle(title, fontsize = 14, fontweight = "bold", ha = "center")
+    data_src = KX_TO_DATASRC.get(ctl_bins.data.kx)
+    data_type =  KT_TO_DATATYPE.get(ctl_bins.data.kt)
+    ctl_name = ctl_bins.data.exp
+    exp_name = "j54rp1"
+    starttime = ctl_bins.ts_range[0]
+    endtime = ctl_bins.ts_range[1]
+    
+
+
+    title = f"{ctl_name} (ctl) vs. {exp_name} (exp)\n{starttime.strftime('%d%b%Y %HZ')} - {endtime.strftime('%d%b%Y %HZ')}"
+    title2 = f"Comparison of mean and rms: O-B"
+    plt.suptitle(title, fontsize=14, fontweight="bold",y = 0.98, ha="center")
+    fig.text(0.5,0.91, title2, fontsize = 12, fontweight = "bold", color = "blue", ha = "center")
+    
+    
     plt.tight_layout()
+    plt.subplots_adjust(top = 0.78)
     ...
 
 
