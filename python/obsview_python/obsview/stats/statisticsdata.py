@@ -14,4 +14,7 @@ class StatisticsData:
     mean_sigo: np.ndarray = field(default_factory = lambda: np.array([]))
     mean_esigo: np.ndarray = field(default_factory = lambda: np.array([]))
     mean_esigb: np.ndarray = field(default_factory = lambda: np.array([]))
+
+
+    std_omb: np.ndarray = field(default_factory = lambda: np.array([]))
     ...

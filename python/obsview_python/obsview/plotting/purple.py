@@ -11,7 +11,7 @@ from ..config import KX_TO_DATASRC, KT_TO_DATATYPE
 
 
 
-def plot_purple(ctl_bins: BinnedData, ctl_stats: StatisticsData, exp_stats:StatisticsData):
+def plot_purple(ctl_bins: BinnedData, ctl_stats: StatisticsData, exp_stats:StatisticsData, plot_var: str):
     fig, ax1 = plt.subplots(figsize=(7, 8))
 
     ctl = ctl_stats.mean_omb
@@ -21,6 +21,7 @@ def plot_purple(ctl_bins: BinnedData, ctl_stats: StatisticsData, exp_stats:Stati
 
 
     rms_ratio = (exp_stats.rms_omb/ctl_stats.rms_omb)
+    std_ratio = (exp_stats.std_omb/ctl_stats.std_omb)
     # Mock Confidence Intervals
     lower_ci = rms_ratio - 0.02
     upper_ci = rms_ratio + 0.03
@@ -65,17 +66,27 @@ def plot_purple(ctl_bins: BinnedData, ctl_stats: StatisticsData, exp_stats:Stati
     # 3. Create Twin Axis for RMS (Top X-axis)
     ax2 = ax1.twiny()  
 
+    span = 0.15
+    ax2.set_xlim(1-span, span+1)  # Scales from 0 to slightly above max RMS
     #ax2.errorbar(rms_ratio, channels, xerr=error_spans, fmt='none', ecolor='blue',elinewidth=1.2,capsize=5, alpha=0.6)
     #ax2.plot(rms_ratio, channels, color='blue', linestyle='', marker='o', linewidth=1.5, label='RMS Diff')
 
-    ax2.barh(channels, rms_ratio-1,left = 1, height=0.4, color="blue",align = "center", edgecolor='none', alpha = 0.75)
-    
-    span = 0.15
-    ax2.set_xlim(1-span, span+1)  # Scales from 0 to slightly above max RMS
+    if plot_var == "rms_omb":
 
-# Labels for Axis 2 (Top)
-    ax2.set_xlabel('RMS O-B Ratio (E/C)', color='blue', fontsize=11)
-    ax2.tick_params(axis='x', labelcolor='blue')
+        ax2.barh(channels, rms_ratio-1,left = 1, height=0.4, color="blue",align = "center", edgecolor='none', alpha = 0.75)
+    # Labels for Axis 2 (Top)
+        ax2.set_xlabel('RMS O-B Ratio (E/C)', color='blue', fontsize=11)
+        ax2.tick_params(axis='x', labelcolor='blue')
+        title2 = f"Comparison of mean and rms: O-B"
+        fig.text(0.5,0.91, title2, fontsize = 12, fontweight = "bold", color = "blue", ha = "center")
+    elif plot_var == "std_omb":
+        ax2.barh(channels, std_ratio-1,left = 1, height=0.4, color="purple",align = "center", edgecolor='none', alpha = 0.75)
+    # Labels for Axis 2 (Top)
+        ax2.set_xlabel('STD O-B Ratio (E/C)', color='purple', fontsize=11)
+        ax2.tick_params(axis='x', labelcolor='purple')
+        title2 = f"Comparison of mean and std: O-B"
+        fig.text(0.5,0.91, title2, fontsize = 12, fontweight = "bold", color = "purple", ha = "center")
+        
 
 
     #Horizontal marks:
@@ -93,9 +104,8 @@ def plot_purple(ctl_bins: BinnedData, ctl_stats: StatisticsData, exp_stats:Stati
 
 
     title = f"{ctl_name} (ctl) vs. {exp_name} (exp)\n{starttime.strftime('%d%b%Y %HZ')} - {endtime.strftime('%d%b%Y %HZ')}"
-    title2 = f"Comparison of mean and rms: O-B"
     plt.suptitle(title, fontsize=14, fontweight="bold",y = 0.98, ha="center")
-    fig.text(0.5,0.91, title2, fontsize = 12, fontweight = "bold", color = "blue", ha = "center")
+    
     
     
     plt.tight_layout()

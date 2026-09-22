@@ -1,7 +1,5 @@
 #Miscellaneous functions
 import time
-
-"""Small, generic helpers shared across the package."""
 import numpy as np
 
 

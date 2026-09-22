@@ -1,22 +1,12 @@
 #Main python script for now, running without command line arguments(to be changed later)
-import numpy as np
-import matplotlib.pyplot as plt
-from typing import List, Optional
-from pathlib import Path
-from dataclasses import replace
+import time
 import glob
-import os
-import tarfile
-import tempfile
+import yaml
+from pathlib import Path
+import matplotlib.pyplot as plt
+from dataclasses import replace
 
-from .loading.odsreader import ODSReader
-from .loading.iodareader import IODAReader
-from .loading.timeseriesdata import TimeSeriesData
-from .processing.masking import fill_val_mask, qc_pass_mask, qc_fail_mask
-from .processing.filtering import apply_filter
-from .processing.derived import calc_derived
-from .processing.binning import create_bins
-from .stats.calc_stats import calculate_stats
+from .loading.buildtimeseries import build_ts_from_ods, build_ts_from_tar
 from .stats.aggregate import str_to_datetime, aggregate_stats, aggregate_pass_binned, aggregate_fail_binned
 from .plotting.statsplot import plot_stats
 from .plotting.spatialcoverage import plot_coverage
@@ -28,300 +18,53 @@ from .plotting.purple import plot_purple
 
 
 
-#Function to find a specific .nc4 file inside a tarball of a specified instrument(e.g. atms_n20)
-def find_instrument_member(tar: tarfile.TarFile, instrument: str) -> Optional[tarfile.TarInfo]:
-    members = tar.getmembers()
-    #Loop over all members of a tarball
-    for member in members:
-        base = os.path.basename(member.name)
-        
-        if base.startswith(instrument) and base.endswith("nc4"):
-            return member
-         
-    return None
-    ...
-
-def extract_member_path(tar: tarfile.TarFile, member: tarfile.TarInfo, dest_dir: str) -> str:
-     # Reject non-regular files (symlinks, hardlinks, devices, dirs-as-files).
-    if not member.isfile():
-        raise ValueError(f"Refusing to extract non-regular member: {member.name!r}")
-
-    member_path = os.path.join(dest_dir, member.name)
-
-    # Extract just this member. On Python 3.12+, filter='data' adds another
-    # layer of protection; guard so it still works on older versions.
-    try:
-        tar.extract(member, path=dest_dir, filter="data")  # py3.12+
-    except TypeError:
-        tar.extract(member, path=dest_dir)                 # older Python
-
-    extracted = os.path.abspath(member_path)
-    return extracted
-
-    ...
-
-#TODO: Make module for searching experiment directories and finding specific tar files for comparing experiments
-def experiment_tar_dir(base_path: str, expid: str, dt: str) -> str:
-    """
-    Build the tarball directory for one experiment and a given datetime.
-
-    Layout: <base_path>/<expid>/jedi/obs/Y<YYYY>/M<MM>/
-
-    Parameters
-    ----------
-    base_path : str
-        Absolute path to the directory containing experiment folders.
-    expid : str
-        Experiment id, e.g. 'j54rp1'.
-    dt : str
-        Expected string format: 'YYYYMMDDHH', example: '2026010100'
-    """
-    dt = str_to_datetime(dt)
-    
-    if not os.path.isabs(base_path):
-        raise ValueError(f"base_path must be absolute: {base_path!r}")
-
-    year_dir = f"Y{dt.year:04d}"
-    month_dir = f"M{dt.month:02d}"
-    tar_dir = os.path.join(base_path, expid, "jedi", "obs", year_dir, month_dir)
-
-    if not os.path.isdir(tar_dir):
-        raise FileNotFoundError(f"Experiment tar directory not found: {tar_dir!r}")
-    return tar_dir
 
 
-
-#Function to loop over IODA files and create a timeseries data object
-def build_ts_from_ioda(filenames: List[str], varname: str, kx: int) -> TimeSeriesData:
-    reader = IODAReader()
-    records = []        #List to append relevant contents of each file to
-
-    for fname in filenames:
-        data = reader.read(fname, varname, kx)
-        #masking
-        val_mask = fill_val_mask(data)
-    
-        #filtering
-        valid_data = apply_filter(data, val_mask)
-        
-        #QC masking
-        pass_mask = qc_pass_mask(valid_data)
-        fail_mask = qc_fail_mask(valid_data)
-        pass_data = apply_filter(valid_data, pass_mask)
-        fail_data = apply_filter(valid_data, fail_mask)
-
-        #calculate job, joa, esigo, esigb
-        pass_data = calc_derived(pass_data)                 #Only calculate variables for QC = 0 data
-
-        #binning
-        pass_data_binned = create_bins(pass_data)
-        fail_data_binned = create_bins(fail_data)
-        #stats
-        pass_stats_binned = calculate_stats(pass_data_binned)      #Only calculate stats on QC = 0 data
-
-        #append objects to records list
-        records.append(
-            (data.datetime, pass_stats_binned, pass_data_binned, fail_data_binned)
-        )
-
-    records.sort(key=lambda r: r[0])        #Sort chronologically
-
-    #Append datetimes
-    datetimes  = [r[0] for r in records]
-    pass_stats = [r[1] for r in records]
-    pass_data  = [r[2] for r in records]
-    fail_data  = [r[3] for r in records]
-
-    obj = TimeSeriesData(
-        datetimes = datetimes,
-        pass_stats = pass_stats,
-        pass_data = pass_data,
-        fail_data = fail_data 
-    )
-    return obj
-    ...
-
-
-def build_ts_from_tar(tar_path: str, instrument: str, varname: str, kx: int, start_time:str, end_time: str) -> TimeSeriesData:
-    tar_file_paths = sorted(glob.glob(os.path.join(tar_path, "*.tar")))
-    records = []
-    reader = IODAReader()
-    starttime = str_to_datetime(start_time)
-    endtime = str_to_datetime(end_time)
-    #Loop through tar files
-    for tar_file_path in tar_file_paths:
-        exp_name = Path(tar_file_path).name.split(".",1)[0]
-        with tarfile.open(tar_file_path, mode = "r:*") as tar:
-            member = find_instrument_member(tar, instrument)
-            if member == None:      #If instrument file is missing...
-                continue
-            with tempfile.TemporaryDirectory() as tmp:
-                nc_path = extract_member_path(tar, member, tmp)
-                data = reader.read(nc_path,varname, kx)
-                data = replace(data, exp = exp_name)
-                #masking
-                val_mask = fill_val_mask(data)
-            
-                #filtering
-                valid_data = apply_filter(data, val_mask)
-                
-                #QC masking
-                pass_mask = qc_pass_mask(valid_data)
-                fail_mask = qc_fail_mask(valid_data)
-                pass_data = apply_filter(valid_data, pass_mask)
-                fail_data = apply_filter(valid_data, fail_mask)
-
-                #calculate job, joa, esigo, esigb
-                pass_data = calc_derived(pass_data)                 #Only calculate variables for QC = 0 data
-
-                #binning
-                pass_data_binned = create_bins(pass_data)
-                pass_data_binned = replace(pass_data_binned, ts_range = [starttime, endtime])
-                fail_data_binned = create_bins(fail_data)
-                #stats
-                pass_stats_binned = calculate_stats(pass_data_binned)      #Only calculate stats on QC = 0 data
-
-                #append objects to records list
-                records.append(
-                    (data.datetime, pass_stats_binned, pass_data_binned, fail_data_binned)
-                )
-                
-    records.sort(key=lambda r: r[0])        #Sort chronologically
-
-    #Append datetimes
-    datetimes  = [r[0] for r in records]
-    pass_stats = [r[1] for r in records]
-    pass_data  = [r[2] for r in records]
-    fail_data  = [r[3] for r in records]
-
-    obj = TimeSeriesData(
-        datetimes = datetimes,
-        pass_stats = pass_stats,
-        pass_data = pass_data,
-        fail_data = fail_data 
-    )
-    return obj
-
-
-def build_ts_from_ods(filenames: List[str], varname, kx, start_time: str, end_time: str) -> TimeSeriesData:
-    reader = ODSReader()
-    records = []        #List to append relevant contents of each file to
-    starttime = str_to_datetime(start_time)
-    endtime = str_to_datetime(end_time)
-
-    for fname in filenames:
-        data = reader.read(fname, varname, kx)
-        #masking
-        val_mask = fill_val_mask(data)
-    
-        #filtering
-        valid_data = apply_filter(data, val_mask)
-        
-        #QC masking
-        pass_mask = qc_pass_mask(valid_data)
-        fail_mask = qc_fail_mask(valid_data)
-        pass_data = apply_filter(valid_data, pass_mask)
-        fail_data = apply_filter(valid_data, fail_mask)
-
-        #calculate job, joa, esigo, esigb
-        pass_data = calc_derived(pass_data)                 #Only calculate variables for QC = 0 data
-
-        #binning
-        pass_data_binned = create_bins(pass_data)
-        pass_data_binned = replace(pass_data_binned, ts_range = [starttime, endtime])
-        fail_data_binned = create_bins(fail_data)
-        #stats
-        pass_stats_binned = calculate_stats(pass_data_binned)      #Only calculate stats on QC = 0 data
-
-        #append objects to records list
-        records.append(
-            (data.datetime, pass_stats_binned, pass_data_binned, fail_data_binned)
-        )
-
-    records.sort(key=lambda r: r[0])        #Sort chronologically
-
-    #Append datetimes
-    datetimes  = [r[0] for r in records]
-    pass_stats = [r[1] for r in records]
-    pass_data  = [r[2] for r in records]
-    fail_data  = [r[3] for r in records]
-
-    obj = TimeSeriesData(
-        datetimes = datetimes,
-        pass_stats = pass_stats,
-        pass_data = pass_data,
-        fail_data = fail_data 
-    )
-    return obj
-    ...
-
-
-def make_map_plot(filename: str, varname: str, kx: int) -> None:
-    #IODA file
-    reader = IODAReader()
-    data = reader.read(filename, varname, kx)
-    
-
-    #masking
-    val_mask = fill_val_mask(data)
-    
-    #filtering
-    valid_data = apply_filter(data, val_mask)
-    
-
-    #QC masking
-    pass_mask = qc_pass_mask(valid_data)
-    fail_mask = qc_fail_mask(valid_data)
-
-
-    pass_data = apply_filter(valid_data, pass_mask)
-    fail_data = apply_filter(valid_data, fail_mask)
-
-    #calculate job, joa, esigo, esigb
-    pass_data = calc_derived(pass_data)                 #Only calculate variables for QC = 0 data
-
-    #binning
-    pass_data_binned = create_bins(pass_data)
-    fail_data_binned = create_bins(fail_data)
-
-    #plotting
-    coverage_plot = plot_coverage(pass_data_binned,fail_data_binned,14)
-    plt.show()
-    ...
 
 
 
 def main() -> None:
+    config_path = Path(__file__).parent / 'config.yml'
+    with open(config_path, 'r') as file:
+        config = yaml.safe_load(file)
     
-    
-    exp = "x0054"
-    tar_path = "/Users/ltrayano/Desktop/Obsview/Obsview/python/data/IODA files/j54rp1/jedi/obs/Y2026/M01"
-    ods_path = "python/data/ODS files/x0054/x0054.diag_atms_n20.20260131_00z.ods"
-    instrument = "atms_n20"
-    varname = "brightnessTemperature"
-    kx = 920
-    starttime = "2026010100"
-    endtime = "2026012512"
 
-    filenames_exp = sorted(glob.glob(f"python/data/ODS files/{exp}/{exp}.diag_atms_n20.*.ods"))
+    ctl = config['ctl']
+    ctl_path = config['ctl_path']
+    exp_path = config['exp_path']
+    instrument = config['instrument']
+    varname = config['varname']
+    kx = config['kx']
+    starttime = str(config['starttime'])
+    endtime = str(config['endtime'])
+
+    filenames_ctl = sorted(glob.glob(f"python/data/ODS files/{ctl}/{ctl}.diag_atms_n20.*.ods"))
 
     print("Loading ODS...")
-    ts_ctl = build_ts_from_ods(filenames_exp,varname,kx, starttime, endtime)
-    print("Ods files loaded")
+    start_time = time.perf_counter()
+    ts_ctl = build_ts_from_ods(filenames_ctl,varname,kx, starttime, endtime)    
+    end_time = time.perf_counter()
+    print("ODS files loaded")
+    print(f"Task time: {end_time - start_time} seconds")
+    
+    
     print("Loading IODA...")
-    ts_exp = build_ts_from_tar(tar_path,instrument,varname,kx,starttime, endtime)
-    print("IODA files loaded...")
+    start_time = time.perf_counter()
+    ts_exp = build_ts_from_tar(exp_path,instrument,varname,kx,starttime, endtime)
+    end_time = time.perf_counter()
+    print("IODA files loaded")
+    print(f"Task time: {end_time - start_time} seconds")
 
     ctl_ag_bins = aggregate_pass_binned(ts_ctl,starttime,endtime)
     ctl_ag_stats = aggregate_stats(ts_ctl, starttime, endtime)
     exp_ag_stats = aggregate_stats(ts_exp, starttime, endtime)
     
 
-    # stats_plot = plot_stats(ag_pass, ag_fail, ag_stats)
+    #stats_plot = plot_stats(ag_pass, ag_fail, ag_stats)
 
-    # series_plot = plot_series(ts_exp, channel=9)
+    #series_plot = plot_series(ts_exp, channel=9)
 
-    purple_plot = plot_purple(ctl_ag_bins,ctl_ag_stats,exp_ag_stats)
+    purple_plot = plot_purple(ctl_ag_bins,ctl_ag_stats,exp_ag_stats, "std_omb")
     plt.show()
     
 

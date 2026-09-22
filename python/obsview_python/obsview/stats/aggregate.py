@@ -49,15 +49,16 @@ def aggregate_stats(ts: TimeSeriesData, start_time: str, end_time: str) -> Stati
     mean_sigo = np.zeros(lev_count)
     mean_esigo = np.zeros(lev_count)
     mean_esigb = np.zeros(lev_count)
+    std_omb = np.zeros(lev_count)
 
     for datetime in time_range:     #Loop over all dts in time range
         dt_count += 1
         if datetime in ts.datetimes:    #If specific datetime from range is equal to one of the timeseries datetimes...
             nobs += ts.pass_stats[ts.datetimes.index(datetime)].nobs
-            mean_omb =+ ts.pass_stats[ts.datetimes.index(datetime)].mean_omb
-            rms_omb += (ts.pass_stats[ts.datetimes.index(datetime)].rms_omb)**2
+            mean_omb += ts.pass_stats[ts.datetimes.index(datetime)].mean_omb
+            rms_omb += (ts.pass_stats[ts.datetimes.index(datetime)].mean_omb)**2
             mean_oma += ts.pass_stats[ts.datetimes.index(datetime)].mean_oma
-            rms_oma += (ts.pass_stats[ts.datetimes.index(datetime)].rms_oma)**2
+            rms_oma += (ts.pass_stats[ts.datetimes.index(datetime)].mean_oma)**2
             mean_job += ts.pass_stats[ts.datetimes.index(datetime)].mean_job
             mean_joa += ts.pass_stats[ts.datetimes.index(datetime)].mean_joa
             mean_sigo += ts.pass_stats[ts.datetimes.index(datetime)].mean_sigo
@@ -77,6 +78,11 @@ def aggregate_stats(ts: TimeSeriesData, start_time: str, end_time: str) -> Stati
     avg_mean_esigo = mean_esigo/dt_count
     avg_mean_esigb = mean_esigb/dt_count
     
+    for datetime in time_range:     #Loop over all dts in time range
+        if datetime in ts.datetimes:
+            std_omb += (ts.pass_stats[ts.datetimes.index(datetime)].mean_omb - avg_mean_omb)**2
+
+    avg_std_omb = np.sqrt(std_omb/dt_count)
     
     #Assign time averaged variables to StatisticsData attibutes
 
@@ -90,7 +96,8 @@ def aggregate_stats(ts: TimeSeriesData, start_time: str, end_time: str) -> Stati
         mean_joa = avg_mean_joa,
         mean_sigo = avg_mean_sigo,
         mean_esigo = avg_mean_esigo,
-        mean_esigb = avg_mean_esigb
+        mean_esigb = avg_mean_esigb,
+        std_omb = avg_std_omb
     )
 
     return obj

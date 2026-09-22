@@ -1,0 +1,12 @@
+#YAML file for configuring main.py settings
+ctl: x0054
+ctl_path: "python/data/ODS files/x0054/x0054.diag_atms_n20.20260131_00z.ods"
+
+exp: j54rp1
+exp_path: /Users/ltrayano/Desktop/Obsview/Obsview/python/data/IODA files/j54rp1/jedi/obs/Y2026/M01
+
+instrument: atms_n20
+kx: 920
+varname: brightnessTemperature
+starttime: 2026010100
+endtime: 2026012512
