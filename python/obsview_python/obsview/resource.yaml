@@ -16,8 +16,12 @@ VARNAME_TO_KT:
 # Used for the data source part of plot titles
 KX_TO_DATASRC:
   220: "RADIOSONDE WIND"
+  326: "AMSUA Metop-B"
+  876: "IASI Metop-B"
   920: "ATMS NOAA-20"
+  921: "ATMS NOAA-21"
 
 KT_TO_DATATYPE:
   4: "Upper air zonal wind"
+  5: "Upper air meridional wind"
   40: "Brightness temperature"
