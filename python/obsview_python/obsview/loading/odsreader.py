@@ -1,6 +1,7 @@
 #Module containing ODSReader object 
 import os
 import re
+import yaml
 import numpy as np
 from netCDF4 import Dataset
 from dataclasses import replace
@@ -8,9 +9,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from .observationdata import ObservationData
-from ..config import VARNAME_TO_KT
 from ..processing.filtering import apply_filter
 
+
+rc_path = Path(__file__).parent / '../resource.yaml'
+with open(rc_path, "r") as f:
+        rc = yaml.safe_load(f) 
 
 class ODSReader:
 
@@ -83,7 +87,7 @@ class ODSReader:
     
     #Create a mask to keep data with a unique kt and kx
     def _kt_kx_mask(self, obj: ObservationData, varname: str, kx: int) -> np.ndarray:
-        kt = VARNAME_TO_KT.get(varname)
+        kt = rc['VARNAME_TO_KT'].get(varname)
         valid_mask = ((obj.kt == kt)
                       & (obj.kx == kx))
         return valid_mask

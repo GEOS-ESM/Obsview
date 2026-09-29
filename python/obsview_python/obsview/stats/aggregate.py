@@ -9,7 +9,7 @@ from ..loading.timeseriesdata import TimeSeriesData
 from .statisticsdata import StatisticsData
 from ..processing.binning import BinnedData
 
-#TODO: Put this in utils.py
+
 #Create datetime object from string formatted like Matlab version:
 # expected string format: 'YYYYMMDDHH', example: '2026010100'
 def str_to_datetime(datetime_str:str) -> datetime:
@@ -20,9 +20,7 @@ def str_to_datetime(datetime_str:str) -> datetime:
     ...
 
 #Create list of datetime objects from user specified start and end datetime strings
-def create_time_range(start_time:str, end_time:str) -> List[datetime]:
-    starttime = str_to_datetime(start_time)
-    endtime = str_to_datetime(end_time)
+def create_time_range(starttime:datetime, endtime:datetime) -> List[datetime]:
 
     # Calculate total 6-hour intervals
     steps = int((endtime - starttime).total_seconds() / 3600) // 6
@@ -33,7 +31,7 @@ def create_time_range(start_time:str, end_time:str) -> List[datetime]:
     ...
 
 #Function to compute time averaged statistics from user specified time range (starttime, endtime)
-def aggregate_stats(ts: TimeSeriesData, start_time: str, end_time: str) -> StatisticsData:
+def aggregate_stats(ts: TimeSeriesData, start_time: datetime, end_time: datetime) -> StatisticsData:
     lev_count = np.size(ts.pass_stats[0].nobs)
     
     time_range = create_time_range(start_time, end_time)
@@ -103,7 +101,7 @@ def aggregate_stats(ts: TimeSeriesData, start_time: str, end_time: str) -> Stati
     return obj
 
 
-def aggregate_pass_binned(ts: TimeSeriesData, start_time:str, end_time: str) -> BinnedData:
+def aggregate_pass_binned(ts: TimeSeriesData, start_time:datetime, end_time: datetime) -> BinnedData:
     lev_count = np.size(ts.pass_stats[0].nobs)
     time_range = create_time_range(start_time, end_time)
     
@@ -138,9 +136,7 @@ def aggregate_pass_binned(ts: TimeSeriesData, start_time:str, end_time: str) -> 
     bin_labels = ts.pass_data[0].bin_labels
     bin_heights = ts.pass_data[0].bin_heights
     is_ts = True
-    starttime = str_to_datetime(start_time)
-    endtime = str_to_datetime(end_time)
-    ts_range = [starttime, endtime]
+    ts_range = [start_time, end_time]
 
     obj = BinnedData(
         data = data,
@@ -154,7 +150,7 @@ def aggregate_pass_binned(ts: TimeSeriesData, start_time:str, end_time: str) -> 
     return obj
     
 
-def aggregate_fail_binned(ts: TimeSeriesData, start_time:str, end_time: str) -> BinnedData:
+def aggregate_fail_binned(ts: TimeSeriesData, start_time:datetime, end_time: datetime) -> BinnedData:
     lev_count = np.size(ts.pass_stats[0].nobs)
     time_range = create_time_range(start_time, end_time)
     

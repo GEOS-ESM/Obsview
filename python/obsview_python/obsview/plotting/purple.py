@@ -1,17 +1,22 @@
 #Module containing plotting functions similar to the "purple" plots
 #Plots time averaged statistics
+import yaml
 import numpy as np
+from pathlib import Path
 import matplotlib.pyplot as plt
 
 from ..processing.binning import BinnedData
 from ..stats.statisticsdata import StatisticsData
-from ..config import KX_TO_DATASRC, KT_TO_DATATYPE
+from ..config import Config
 
 
 
+rc_path = Path(__file__).parent / '../resource.yaml'
+with open(rc_path, "r") as f:
+        rc = yaml.safe_load(f) 
 
 
-def plot_purple(ctl_bins: BinnedData, ctl_stats: StatisticsData, exp_stats:StatisticsData, plot_var: str):
+def plot_purple(ctl_bins: BinnedData, ctl_stats: StatisticsData, exp_stats:StatisticsData, plot_var: str, cfg: Config):
     fig, ax1 = plt.subplots(figsize=(7, 8))
 
     ctl = ctl_stats.mean_omb
@@ -94,10 +99,10 @@ def plot_purple(ctl_bins: BinnedData, ctl_stats: StatisticsData, exp_stats:Stati
         ax1.axhline(channel, color='gray', linestyle=':', linewidth=0.5, alpha=0.5)
 
     #Title
-    data_src = KX_TO_DATASRC.get(ctl_bins.data.kx)
-    data_type =  KT_TO_DATATYPE.get(ctl_bins.data.kt)
-    ctl_name = ctl_bins.data.exp
-    exp_name = "j54rp1"
+    data_src = rc['KX_TO_DATASRC'].get(ctl_bins.data.kx)
+    data_type =  rc['KT_TO_DATATYPE'].get(ctl_bins.data.kt)
+    ctl_name = cfg.experiments[0].id
+    exp_name = cfg.experiments[1].id
     starttime = ctl_bins.ts_range[0]
     endtime = ctl_bins.ts_range[1]
     

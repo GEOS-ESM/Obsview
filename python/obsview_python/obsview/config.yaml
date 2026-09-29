@@ -1,0 +1,107 @@
+#YAML file for configuring main.py settings
+
+
+# ============================================================
+# Runtime settings
+# ============================================================
+
+run:
+  parallel: true            # enable multiprocessing across file
+  verbose: true             # detailed progress/logging
+
+
+# ------------------------------------------------------------
+# Data source templates
+# ------------------------------------------------------------
+data:
+  #   {base}   -> experiment.base_path
+  #   {expid}  -> experiment.id
+  #   {year}   -> selection year (YYYY)
+  #   {month}  -> selection month (MM)
+  ioda:
+    dir_template: "{base}/{expid}/jedi/obs/Y{year}/M{month}"
+    file_time_format: "%Y%m%d_%Hz"
+    file_pattern: "{instrument}.*.nc4"
+
+  ods:
+    dir_template: "{base}/{expid}/obs/Y{year}/M{month}/D{day}/H{hour}"
+    file_time_format: "%Y%m%d_%Hz"
+    file_pattern: "{expid}.diag_{instrument}.{file_time_format}.ods"
+
+# ------------------------------------------------------------
+# Experiment locations
+# ------------------------------------------------------------
+experiments:
+  - id: j54rp1
+    file_type: "ioda"
+    base_path: /Users/ltrayano/Desktop/Obsview/Obsview/python/data/IODA files
+    label: "Control"          # shown in plot legends/titles
+
+  - id: x0054
+    file_type: "ods"
+    base_path: /Users/ltrayano/Desktop/Obsview/Obsview/python/data/ODS files
+    label: "Experiment"
+
+# ------------------------------------------------------------
+# Analysis selection
+# ------------------------------------------------------------
+selection:
+  time_range:
+    start: "2026-01-01 00"
+    end:   "2026-01-01 18"
+    
+
+  # Analyze one or more instrument/obstype pairs.
+  targets:
+    - instrument: atms_n20
+      kx: 920                       #optional; else resolved from instrument (if null, uses all kx's for instruments with more than 1 kx)
+      obtype: radiance
+      varname: brightnessTemperature   # optional; else resolved from obtype
+      kt: 40                           # optional; else resolved from obtype
+
+    # - instrument: radiosonde_wind
+    #   kx: 220
+    #   obtype: wind
+    #   varname: windEastward
+    #   kt: 4
+
+
+# ------------------------------------------------------------
+# Plot settings
+# ------------------------------------------------------------
+plots:
+  statistics:   #(4 panel plot)
+    enabled: false
+    time_averaged: true       # average over the whole time_range
+
+  time_series:
+    enabled: false
+    level: 13
+    date_tick_interval_days: 2
+
+  coverage_map:
+    enabled: false
+    map_level: 13           # null => all vertical levels
+    projection: PlateCarree
+
+  monitoring_map: 
+    enabled: false
+    map_level: 13
+    projection: PlateCarree
+    stat_type: "omb wo BC"
+
+  comparison:
+    enabled: true
+    stat_type: "rms_omb"    #rms or std
+    ratio_bounds: 0.15  #x axis range for comparison ratio (e.g. 0.15 = ±15%)
+
+
+# ------------------------------------------------------------
+# Output settings
+# ------------------------------------------------------------
+output:
+  mode: show                  # 'save', 'show', or 'both'
+  directory: ./output
+  format: png                 # png | pdf | svg
+  dpi: 300
+  filename_template: "{plot}_{instrument}_{start}_{end}"

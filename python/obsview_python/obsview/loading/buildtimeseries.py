@@ -7,18 +7,20 @@ from dataclasses import replace
 from typing import List, Optional
 from pathlib import Path
 from functools import partial
+from datetime import datetime
 from concurrent.futures import ProcessPoolExecutor
 
 from ..loading.timeseriesdata import TimeSeriesData
 from ..loading.iodareader import IODAReader
 from ..loading.odsreader import ODSReader
+from ..utils import _parse_time
 from ..loading.tarreader import find_instrument_member, extract_member_path, _process_single_tar
 from ..processing.masking import fill_val_mask, qc_pass_mask, qc_fail_mask
 from ..processing.filtering import apply_filter
 from ..processing.derived import calc_derived
 from .. processing.binning import create_bins
 from ..stats.calc_stats import calculate_stats
-from ..stats.aggregate import str_to_datetime
+
 
 
 
@@ -73,11 +75,10 @@ def build_ts_from_ioda(filenames: List[str], varname: str, kx: int) -> TimeSerie
     return obj
     ...
 
-def build_ts_from_ods(filenames: List[str], varname, kx, start_time: str, end_time: str) -> TimeSeriesData:
+def build_ts_from_ods(filenames, varname, kx, starttime: datetime, endtime: datetime) -> TimeSeriesData:
     reader = ODSReader()
     records = []        #List to append relevant contents of each file to
-    starttime = str_to_datetime(start_time)
-    endtime = str_to_datetime(end_time)
+    
 
     for fname in filenames:
         data = reader.read(fname, varname, kx)
@@ -125,10 +126,8 @@ def build_ts_from_ods(filenames: List[str], varname, kx, start_time: str, end_ti
     return obj
     ...
 
-def build_ts_from_tar(tar_path: str, instrument: str, varname: str, kx: int, start_time: str, end_time: str) -> TimeSeriesData:
-    tar_file_paths = sorted(glob.glob(os.path.join(tar_path, "*.tar")))
-    starttime = str_to_datetime(start_time)
-    endtime = str_to_datetime(end_time)
+def build_ts_from_tar(tar_file_paths: str, instrument: str, varname: str,
+                      kx: int, starttime: datetime, endtime: datetime) -> TimeSeriesData:
 
     # Freeze constant parameters for pool mapping
     worker_fn = partial(_process_single_tar,instrument=instrument,varname=varname,kx=kx,starttime=starttime,endtime=endtime)

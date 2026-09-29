@@ -1,17 +1,22 @@
 #This module contains functions to create a spatial coverage (map) plot
+import yaml
 import numpy as np
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
+from pathlib import Path
+
 from ..processing.binning import BinnedData
-from ..config import KX_TO_DATASRC, KT_TO_DATATYPE
+
 
 # ---- Easily-changeable coverage settings (hardcoded for now) ----
 # Actual channel number to show on the MAP panel. Set to None to plot all
 # channels. (The count/bar panel always shows every channel regardless.)
 COVERAGE_MAP_CHANNEL = 7
 
-
+rc_path = Path(__file__).parent / '../resource.yaml'
+with open(rc_path, "r") as f:
+        rc = yaml.safe_load(f) 
 
 
 def plot_coverage(pass_data: BinnedData,
@@ -35,8 +40,8 @@ def plot_coverage(pass_data: BinnedData,
 
     Returns the matplotlib Figure so the caller can plt.show() or savefig().
     """
-    data_src = KX_TO_DATASRC.get(pass_data.data.kx)
-    data_type =  KT_TO_DATATYPE.get(pass_data.data.kt)
+    data_src = rc['KX_TO_DATASRC'].get(pass_data.data.kx)
+    data_type =  rc['KT_TO_DATATYPE'].get(pass_data.data.kt)
     region = "Global"
     fig = plt.figure(figsize=(12, 10))
 

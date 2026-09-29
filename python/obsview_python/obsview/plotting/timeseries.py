@@ -1,12 +1,19 @@
 #Module for creating the time series plot (usual time length is one month) for data averaged globally 
+import yaml
 import numpy as np
+from pathlib import Path
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import calendar
 from datetime import datetime, timezone, timedelta
 
 from ..loading.timeseriesdata import TimeSeriesData
-from ..config import KX_TO_DATASRC, KT_TO_DATATYPE
+
+
+
+rc_path = Path(__file__).parent / '../resource.yaml'
+with open(rc_path, "r") as f:
+        rc = yaml.safe_load(f) 
 
 SERIES_CHANNEL = 12
 SERIES_TITLE = "ATMS N20 brightness temperatures: channel 12 (Global)"
@@ -57,8 +64,8 @@ def plot_series(ts: TimeSeriesData,
         month containing the earliest datetime in `ts`.
     """
     ci = _channel_index(ts, channel)
-    data_src = KX_TO_DATASRC.get(ts.pass_data[0].data.kx)
-    data_type =  KT_TO_DATATYPE.get(ts.pass_data[0].data.kt)
+    data_src = rc['KX_TO_DATASRC'].get(ts.pass_data[0].data.kx)
+    data_type =  rc['KT_TO_DATATYPE'].get(ts.pass_data[0].data.kt)
     starttime = ts.pass_data[0].ts_range[0]
     endtime = ts.pass_data[0].ts_range[1]
     region = "Global"

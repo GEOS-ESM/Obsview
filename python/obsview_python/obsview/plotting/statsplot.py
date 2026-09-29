@@ -1,12 +1,19 @@
 #Module containing plotting functions to create the 4 pannel statistics plot
+import yaml
 import numpy as np
 import matplotlib.pyplot as plt
 from datetime import datetime
+from pathlib import Path
 
 from ..processing.binning import BinnedData
 from ..stats.statisticsdata import StatisticsData
 from ..stats.calc_stats import count_obs_per_bin
-from ..config import KX_TO_DATASRC, KT_TO_DATATYPE
+
+
+rc_path = Path(__file__).parent / '../resource.yaml'
+with open(rc_path, "r") as f:
+        rc = yaml.safe_load(f) 
+
 
 
 def plot_stats(pass_data: BinnedData, fail_data: BinnedData, stats: StatisticsData):
@@ -16,8 +23,8 @@ def plot_stats(pass_data: BinnedData, fail_data: BinnedData, stats: StatisticsDa
     """
     lev_type = pass_data.data.lev_type
 
-    data_src = KX_TO_DATASRC.get(pass_data.data.kx)
-    data_type =  KT_TO_DATATYPE.get(pass_data.data.kt)
+    data_src = rc['KX_TO_DATASRC'].get(pass_data.data.kx)
+    data_type =  rc['KT_TO_DATATYPE'].get(pass_data.data.kt)
     file_type = pass_data.data.file_type
     #For plotting single time or time range
     if pass_data.is_ts:

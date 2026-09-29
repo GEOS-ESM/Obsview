@@ -1,6 +1,7 @@
 #Miscellaneous functions
 import time
 import numpy as np
+from datetime import datetime, timezone
 
 
 def safe_filled(arr, fallback_value):
@@ -23,3 +24,8 @@ def timer(base_fn):
         end_time = time.perf_counter()
         print(f"Task time: {end_time - start_time} seconds")
     return enhanced_fn  
+
+def _parse_time(s: str) -> datetime:
+    # Accept 'YYYY-MM-DD HH
+    dt = datetime.strptime(s, "%Y-%m-%d %H")
+    return dt.replace(tzinfo=timezone.utc)

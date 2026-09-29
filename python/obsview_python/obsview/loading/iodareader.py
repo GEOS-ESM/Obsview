@@ -1,11 +1,16 @@
 #Module containing IODAReader class and relevant functions
+import yaml
 import numpy as np
+from pathlib import Path
 from netCDF4 import Dataset
 from dataclasses import replace
 from datetime import datetime, timezone
 from .observationdata import ObservationData
-from ..config import VARNAME_TO_KT
 
+
+rc_path = Path(__file__).parent / '../resource.yaml'
+with open(rc_path, "r") as f:
+        rc = yaml.safe_load(f) 
 
 class IODAReader:
     
@@ -35,7 +40,7 @@ class IODAReader:
         "datetime": nc.groups["MetaData"].variables["dateTime"][:].flatten(),
         "bias": nc.groups["ObsBias0"].variables[varname][:].flatten(),
         "kx": kx,     #No better way to retrieve kx/sid for now
-        "kt": VARNAME_TO_KT.get(varname)       
+        "kt": rc['VARNAME_TO_KT'].get(varname)       
         }
         
 

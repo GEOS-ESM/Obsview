@@ -47,34 +47,6 @@ def extract_member_path(tar: tarfile.TarFile, member: tarfile.TarInfo, dest_dir:
 
     ...
 
-#TODO: Make module for searching experiment directories and finding specific tar files for comparing experiments
-def experiment_tar_dir(base_path: str, expid: str, dt: str) -> str:
-    """
-    Build the tarball directory for one experiment and a given datetime.
-
-    Layout: <base_path>/<expid>/jedi/obs/Y<YYYY>/M<MM>/
-
-    Parameters
-    ----------
-    base_path : str
-        Absolute path to the directory containing experiment folders.
-    expid : str
-        Experiment id, e.g. 'j54rp1'.
-    dt : str
-        Expected string format: 'YYYYMMDDHH', example: '2026010100'
-    """
-    dt = str_to_datetime(dt)
-    
-    if not os.path.isabs(base_path):
-        raise ValueError(f"base_path must be absolute: {base_path!r}")
-
-    year_dir = f"Y{dt.year:04d}"
-    month_dir = f"M{dt.month:02d}"
-    tar_dir = os.path.join(base_path, expid, "jedi", "obs", year_dir, month_dir)
-
-    if not os.path.isdir(tar_dir):
-        raise FileNotFoundError(f"Experiment tar directory not found: {tar_dir!r}")
-    return tar_dir
 
 def _process_single_tar(
     tar_file_path: str,
