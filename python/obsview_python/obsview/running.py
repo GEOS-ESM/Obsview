@@ -133,6 +133,7 @@ def _load_all_experiments(cfg: Config, target: Target, start: datetime, end: dat
         expid = exp.id
         file_type = exp.file_type
         if file_type == "ods":
+            print("Loading ODS files...")
             dir_template = cfg.data.ods.dir_template
             file_pattern = cfg.data.ods.file_pattern
             file_time_format = cfg.data.ods.file_time_format
@@ -140,7 +141,9 @@ def _load_all_experiments(cfg: Config, target: Target, start: datetime, end: dat
                                            file_pattern,file_time_format,start,end)
             ts = build_ts_from_ods(ods_files,varname,kx,start,end)
             ts_by_exp[exp.id] = ts
+            print("ODS files loaded")
         elif file_type == "ioda":
+            print("Loading IODA files...")
             dir_template = cfg.data.ioda.dir_template
             file_pattern = cfg.data.ioda.file_pattern
             file_time_format = cfg.data.ioda.file_time_format
@@ -149,6 +152,7 @@ def _load_all_experiments(cfg: Config, target: Target, start: datetime, end: dat
             ts = build_ts_from_tar(ioda_files,instrument,varname,kx,start,end)
             ts.pass_data[0].data
             ts_by_exp[exp.id] = ts
+            print("IODA files loaded")
         
     #     log.info("  loaded %d synoptic times for %s", len(ts.datetimes), exp.id)
     return ts_by_exp

@@ -78,7 +78,7 @@ def create_channel_bins(data: ObservationData) -> BinnedData:
     binned_data = apply_filter(data, sort_indices)
     
     # Now calculate bin indices based on the sorted data
-    indices = np.searchsorted(channels, binned_data.lev)
+    indices = np.searchsorted(channels, binned_data.all_lev)
     
     n = len(channels)
     centers = np.arange(1, n + 1)            
