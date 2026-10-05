@@ -52,6 +52,7 @@ class Target:
     obtype: str
     varname: str
     kt: int
+    level: int
     
     
     
@@ -66,14 +67,35 @@ class Selection:
 # Plot settings
 # ------------------------------------------------------------
 @dataclass
+class StatisticsSettings:
+    enabled: bool
+    time_averaged: bool
+
+
+@dataclass
 class ComparisonSettings:
     stat_type: str
     ratio_bounds: float
     enabled: bool = True
 
 @dataclass
+class CoverageMapSettings:
+    enabled: bool
+    map_level: int
+    projection: str
+
+@dataclass
+class TimeSeriesSettings:
+    enabled: bool
+    date_tick_interval_days: int
+
+
+@dataclass
 class PlotSettings:
+    statistics: StatisticsSettings
     comparison: ComparisonSettings
+    coverage_map: CoverageMapSettings
+    time_series: TimeSeriesSettings
 
 # ------------------------------------------------------------
 # Output settings
@@ -134,7 +156,10 @@ def load_config(path: str) -> Config:
     )
     #plots
     plots = PlotSettings(
-        comparison = ComparisonSettings(**raw["plots"]["comparison"])
+        statistics= StatisticsSettings(**raw["plots"]["statistics"]),
+        comparison = ComparisonSettings(**raw["plots"]["comparison"]),
+        coverage_map = CoverageMapSettings(**raw["plots"]["coverage_map"]),
+        time_series = TimeSeriesSettings(**raw["plots"]["time_series"])
     )
     #output
     output = Output(**raw["output"])

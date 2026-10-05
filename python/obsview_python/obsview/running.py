@@ -184,47 +184,50 @@ def _make_enabled_plots(cfg: Config, target: Target,
     plots = cfg.plots
 
     
-    # if plots.get("time_series", {}).get("enabled"):
-    #     _dispatch_time_series(cfg, target, ts_by_exp, start, end)
 
-    # if plots.get("coverage_map", {}).get("enabled"):
-    #     _dispatch_coverage(cfg, target,ts_by_exp)
-    
+    if plots.statistics.enabled:
+        _dispatch_statistics(cfg, ag_by_exp)
+
+
+    if plots.coverage_map.enabled:
+        _dispatch_coverage(cfg,ts_by_exp)
+
     if plots.comparison.enabled:
         _dispatch_comparison(cfg, ag_by_exp)
+
+    if plots.time_series.enabled:
+        _dispatch_time_series(cfg,target,ts_by_exp, start, end)
+
+
         ...
 
 
 
 
 
-def _dispatch_time_series(cfg, target, ts_by_exp, start, end) -> None:
-    opts = cfg.plots["time_series"]
-    channel = target.channel
-    if channel is None:
-        raise ValueError(
-            f"time_series requires selection.targets[*].channel for "
-            f"instrument {target.instrument!r}"
-        )
-
-    for exp_id, ts in ts_by_exp.items():
-        title = f"{exp_id}  {target.instrument} ch{channel}"
-        fig = plot_series(ts, channel=channel, title=title, start=start, end=end)
-        _finalize(cfg, fig, plot="series", target=target, exp=exp_id)
+def _dispatch_statistics(cfg, ag_by_exp) -> None:
+    iter_values = iter(ag_by_exp.values())
+    ctl_values = next(iter_values)
+    stats = ctl_values[0]
+    pass_data = ctl_values[1]
+    fail_data = ctl_values[2]
+    fig = plot_stats(pass_data, fail_data, stats)
+    ...
 
 
-def _dispatch_coverage(cfg, target, ts_by_exp) -> None:
-    opts = cfg.plots["coverage_map"]
-    map_channel = opts.get("map_channel")   # may be None => all channels
+def _dispatch_time_series(cfg, target: Target, ts_by_exp, start, end) -> None:
+    level = target.level
+    for exp in ts_by_exp:
+        ts = ts_by_exp[exp]
+        fig = plot_series(ts, channel=level, start=start, end=end)
+    ...
 
-    # Coverage is per-synoptic-time; use the first time as a representative
-    # snapshot (or loop all times if you want one map per cycle).
-    for exp_id, ts in ts_by_exp.items():
-        pass_b = ts.pass_data[0]
-        fail_b = ts.fail_data[0]
-        title = f"{exp_id}  {target.instrument}"
-        fig = plot_coverage(pass_b, fail_b, map_channel=map_channel, title=title)
-        _finalize(cfg, fig, plot="coverage", target=target, exp=exp_id)
+def _dispatch_coverage(cfg: Config,target:Target, ts_by_exp) -> None:
+    level = target.level
+    for exp in ts_by_exp:
+        pass_data = ts_by_exp[exp].pass_data[0]
+        fail_data = ts_by_exp[exp].fail_data[0]
+    fig = plot_coverage(pass_data, fail_data, map_channel=level)
 
 def _dispatch_comparison(cfg: Config, ag_by_exp) -> None:
     stats_type = cfg.plots.comparison.stat_type

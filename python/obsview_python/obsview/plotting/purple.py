@@ -71,7 +71,7 @@ def plot_purple(ctl_bins: BinnedData, ctl_stats: StatisticsData, exp_stats:Stati
     # 3. Create Twin Axis for RMS (Top X-axis)
     ax2 = ax1.twiny()  
 
-    span = 0.15
+    span = 0.30
     ax2.set_xlim(1-span, span+1)  # Scales from 0 to slightly above max RMS
     #ax2.errorbar(rms_ratio, channels, xerr=error_spans, fmt='none', ecolor='blue',elinewidth=1.2,capsize=5, alpha=0.6)
     #ax2.plot(rms_ratio, channels, color='blue', linestyle='', marker='o', linewidth=1.5, label='RMS Diff')

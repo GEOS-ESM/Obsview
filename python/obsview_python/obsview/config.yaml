@@ -37,10 +37,10 @@ experiments:
     base_path: /Users/ltrayano/Desktop/Obsview/Obsview/python/data/IODA files
     label: "Control"          # shown in plot legends/titles
 
-  # - id: x0054
-  #   file_type: "ods"
-  #   base_path: /Users/ltrayano/Desktop/Obsview/Obsview/python/data/ODS files
-  #   label: "Experiment"
+  - id: x0054
+    file_type: "ods"
+    base_path: /Users/ltrayano/Desktop/Obsview/Obsview/python/data/ODS files
+    label: "Experiment"
 
 # ------------------------------------------------------------
 # Analysis selection
@@ -48,22 +48,24 @@ experiments:
 selection:
   time_range:
     start: "2026-01-01 06"
-    end:   "2026-01-01 18"
+    end:   "2026-01-31 18"
     
 
   # Analyze one or more instrument/obstype pairs.
   targets:
-    - instrument: iasi_metop-b
-      kx: 876                       #optional; else resolved from instrument (if null, uses all kx's for instruments with more than 1 kx)
-      obtype: radiance
-      varname: brightnessTemperature   # optional; else resolved from obtype
-      kt: 40                           # optional; else resolved from obtype
+    # - instrument: iasi_metop-b
+    #   kx: 876                       
+    #   obtype: radiance
+    #   varname: brightnessTemperature   
+    #   kt: 40 
+    #   level: 220                          
 
-    # - instrument: radiosonde_wind
-    #   kx: 220
-    #   obtype: wind
-    #   varname: windEastward
-    #   kt: 4
+    - instrument: atms_n20
+      kx: 920
+      obtype: radiance
+      varname: brightnessTemperature
+      kt: 40
+      level: 13   #used for plotting specific level(channel)
 
 
 # ------------------------------------------------------------
@@ -75,8 +77,7 @@ plots:
     time_averaged: true       # average over the whole time_range
 
   time_series:
-    enabled: false
-    level: 13
+    enabled: true
     date_tick_interval_days: 2
 
   coverage_map:
@@ -91,7 +92,7 @@ plots:
     stat_type: "omb wo BC"
 
   comparison:
-    enabled: true
+    enabled: false
     stat_type: "rms_omb"    #rms or std
     ratio_bounds: 0.15  #x axis range for comparison ratio (e.g. 0.15 = ±15%)
 
