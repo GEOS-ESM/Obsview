@@ -2,6 +2,7 @@
 import os
 import tarfile
 import tempfile
+import numpy as np
 from pathlib import Path
 from dataclasses import replace
 from typing import List, Optional, Tuple, Any
@@ -82,6 +83,7 @@ def _process_single_tar(
 
             # Derived calculations
             pass_data = calc_derived(pass_data)
+            
 
             # Binning
             pass_data_binned = create_bins(pass_data)
@@ -90,5 +92,6 @@ def _process_single_tar(
 
             # Stats
             pass_stats_binned = calculate_stats(pass_data_binned)
+            
 
             return (data.datetime, pass_stats_binned, pass_data_binned, fail_data_binned)

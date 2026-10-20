@@ -190,13 +190,14 @@ def _make_enabled_plots(cfg: Config, target: Target,
 
 
     if plots.coverage_map.enabled:
-        _dispatch_coverage(cfg,ts_by_exp)
+        _dispatch_coverage(cfg,target,ts_by_exp)
 
     if plots.comparison.enabled:
         _dispatch_comparison(cfg, ag_by_exp)
 
     if plots.time_series.enabled:
-        _dispatch_time_series(cfg,target,ts_by_exp, start, end)
+        #_dispatch_time_series(cfg,target,ts_by_exp, start, end)
+        _dispatch_time_series(cfg,target,ts_by_exp)
 
 
         ...
@@ -215,7 +216,7 @@ def _dispatch_statistics(cfg, ag_by_exp) -> None:
     ...
 
 
-def _dispatch_time_series(cfg, target: Target, ts_by_exp, start, end) -> None:
+def _dispatch_time_series(cfg, target: Target, ts_by_exp, start=None, end=None) -> None:
     level = target.level
     for exp in ts_by_exp:
         ts = ts_by_exp[exp]
@@ -227,7 +228,7 @@ def _dispatch_coverage(cfg: Config,target:Target, ts_by_exp) -> None:
     for exp in ts_by_exp:
         pass_data = ts_by_exp[exp].pass_data[0]
         fail_data = ts_by_exp[exp].fail_data[0]
-    fig = plot_coverage(pass_data, fail_data, map_channel=level)
+    fig = plot_coverage(pass_data, fail_data, map_level=level)
 
 def _dispatch_comparison(cfg: Config, ag_by_exp) -> None:
     stats_type = cfg.plots.comparison.stat_type

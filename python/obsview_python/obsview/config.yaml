@@ -37,18 +37,18 @@ experiments:
     base_path: /Users/ltrayano/Desktop/Obsview/Obsview/python/data/IODA files
     label: "Control"          # shown in plot legends/titles
 
-  - id: x0054
-    file_type: "ods"
-    base_path: /Users/ltrayano/Desktop/Obsview/Obsview/python/data/ODS files
-    label: "Experiment"
+  # - id: x0054
+  #   file_type: "ods"
+  #   base_path: /Users/ltrayano/Desktop/Obsview/Obsview/python/data/ODS files
+  #   label: "Experiment"
 
 # ------------------------------------------------------------
 # Analysis selection
 # ------------------------------------------------------------
 selection:
   time_range:
-    start: "2026-01-01 06"
-    end:   "2026-01-31 18"
+    start: "2026-01-02 00"
+    end:   "2026-01-22 06"
     
 
   # Analyze one or more instrument/obstype pairs.
@@ -58,14 +58,33 @@ selection:
     #   obtype: radiance
     #   varname: brightnessTemperature   
     #   kt: 40 
-    #   level: 220                          
+    #   level: 220
 
-    - instrument: atms_n20
-      kx: 920
-      obtype: radiance
-      varname: brightnessTemperature
-      kt: 40
-      level: 13   #used for plotting specific level(channel)
+    # - instrument: atms_n20
+    #   kx: 920                       
+    #   obtype: radiance
+    #   varname: brightnessTemperature   
+    #   kt: 40 
+    #   level: 14
+
+    - instrument: sondes
+      kx: 120
+      obtype: conventional
+      varname: airTemperature
+      kt: 44
+      level: 500.0   
+
+    # - instrument: atms_n20
+    #   title_name: ""ATMS NOAA-20""
+    #     - varname: brightnessTemperature
+    #       kx: 920
+    #       kt: 40
+    #       level_type: channel
+    #       levels: 1-22 
+    #       title_name: "Brightness temperature"
+
+
+ 
 
 
 # ------------------------------------------------------------
@@ -73,11 +92,11 @@ selection:
 # ------------------------------------------------------------
 plots:
   statistics:   #(4 panel plot)
-    enabled: false
+    enabled: true
     time_averaged: true       # average over the whole time_range
 
   time_series:
-    enabled: true
+    enabled: false
     date_tick_interval_days: 2
 
   coverage_map:

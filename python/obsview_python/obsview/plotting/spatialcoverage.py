@@ -12,7 +12,7 @@ from ..processing.binning import BinnedData
 # ---- Easily-changeable coverage settings (hardcoded for now) ----
 # Actual channel number to show on the MAP panel. Set to None to plot all
 # channels. (The count/bar panel always shows every channel regardless.)
-COVERAGE_MAP_CHANNEL = 7
+COVERAGE_MAP_LEVEL = 7
 
 rc_path = Path(__file__).parent / '../resource.yaml'
 with open(rc_path, "r") as f:
@@ -21,25 +21,8 @@ with open(rc_path, "r") as f:
 
 def plot_coverage(pass_data: BinnedData,
                   fail_data: BinnedData,
-                  map_channel: int = COVERAGE_MAP_CHANNEL):
-    """
-    Build the 2-panel coverage figure from the QC-pass and QC-fail
-    BinnedData objects.
-
-    Panel 1 (top): map of observation locations (used vs. unused) for a
-                   single channel, or all channels if map_channel is None.
-    Panel 2 (bottom): per-channel count of used vs. unused observations
-                      (always shows all channels).
-
-    Parameters
-    ----------
-    map_channel : int or None
-        Actual channel number to display on the map. None => all channels.
-    title : str
-        Figure super-title (instrument/satellite + date/time).
-
-    Returns the matplotlib Figure so the caller can plt.show() or savefig().
-    """
+                  map_level: int = COVERAGE_MAP_LEVEL):
+   
     data_src = rc['KX_TO_DATASRC'].get(pass_data.data.kx)
     data_type =  rc['KT_TO_DATATYPE'].get(pass_data.data.kt)
     region = "Global"
@@ -47,7 +30,10 @@ def plot_coverage(pass_data: BinnedData,
 
     time = pass_data.data.datetime
     title = f"Exp: {pass_data.data.exp} | {time.strftime('%d%b%Y %HZ')}"
-    title2 = f"{data_src} - {data_type}: channel: {map_channel} ({region})"
+    if pass_data.data.lev_type == "channel":
+        title2 = f"{data_src} - {data_type}: channel {map_level} ({region})"
+    else:
+        title2 = f"{data_src} - {data_type}: level {map_level} hPa ({region})"
 
 
     plt.suptitle(title, fontsize=16, fontweight="bold",y = 0.97, ha="center")
@@ -56,9 +42,9 @@ def plot_coverage(pass_data: BinnedData,
 
     # Map panel needs a cartopy projection axis.
     ax_map = fig.add_subplot(gs[0], projection=ccrs.PlateCarree())
-    _coverage_map_panel(ax_map, pass_data, fail_data, map_channel)
+    _coverage_map_panel(ax_map, pass_data, fail_data, map_level)
 
-    # Bar panel is a normal axis; always shows all channels.
+    # Bar panel is a normal axis; always shows all levels.
     ax_bar = fig.add_subplot(gs[1])
     _coverage_count_panel(ax_bar, pass_data, fail_data)
 
@@ -68,26 +54,31 @@ def plot_coverage(pass_data: BinnedData,
 
 
 def _coverage_map_panel(ax, pass_data: BinnedData, fail_data: BinnedData,
-                        map_channel: int):
+                        map_level: int):
     """
     Top panel: scatter observation locations on a world map.
     QC-fail (unused) drawn first in red; QC-pass (used) on top in green.
     If map_channel is not None, only observations on that channel are shown.
     """
     # Select observations for the requested channel (or keep all).
-    if map_channel is None:
+    if map_level is None:
         pass_lon, pass_lat = pass_data.data.lon, pass_data.data.lat
         fail_lon, fail_lat = fail_data.data.lon, fail_data.data.lat
-        chan_str = "all channels"
+        lev_str = "all channels"
     else:
-        pass_sel = pass_data.data.lev == map_channel
-        fail_sel = fail_data.data.lev == map_channel
+        pass_sel = pass_data.data.lev == map_level
+        fail_sel = fail_data.data.lev == map_level
         pass_lon, pass_lat = pass_data.data.lon[pass_sel], pass_data.data.lat[pass_sel]
         fail_lon, fail_lat = fail_data.data.lon[fail_sel], fail_data.data.lat[fail_sel]
-        chan_str = f"Channel #{int(map_channel)}"
+        if pass_data.data.lev_type == "channel":
+            lev_str = f"Channel #{int(map_level)}"
+        else:
+            lev_str = f"Level {int(map_level)} hPa"
+
+    ax.set_global()
 
     # Base map features (mirrors radmap.py styling).
-    ax.set_title(f"Observation Locations ({chan_str}) - QC-pass vs. QC-fail")
+    ax.set_title(f"Observation Locations ({lev_str}) - QC-pass vs. QC-fail")
     ax.coastlines()
     ax.add_feature(cfeature.LAND, edgecolor="black", facecolor="lightgray")
     ax.add_feature(cfeature.OCEAN, facecolor="lightblue")
@@ -97,14 +88,14 @@ def _coverage_map_panel(ax, pass_data: BinnedData, fail_data: BinnedData,
     ax.scatter(
         fail_lon, fail_lat,
         s=5, color="red", alpha=0.3, label="not used",
-        transform=ccrs.PlateCarree(), zorder=1,
+        transform=ccrs.PlateCarree(), zorder=2,
     )
 
     # Used (QC-pass) on top, more opaque.
     ax.scatter(
         pass_lon, pass_lat,
         s=5, color="green", alpha=0.7, label="used",
-        transform=ccrs.PlateCarree(), zorder=3,
+        transform=ccrs.PlateCarree(), zorder=0,
     )
 
     ax.legend(loc="upper right")
@@ -126,11 +117,18 @@ def _coverage_count_panel(ax, pass_data: BinnedData, fail_data: BinnedData):
     ax.bar(x - width / 2, used_counts, width, label="used", color="green")
     ax.bar(x + width / 2, unused_counts, width, label="not used", color="red")
 
-    # Label ticks with true channel numbers (bin_labels), like radmap.py.
-    ax.set_xticks(x)
-    ax.set_xticklabels([f"#{int(ch)}" for ch in pass_data.bin_labels])
+    # Label ticks with true level numbers (bin_labels)
+    x_ax = np.arange(len(pass_data.bin_labels))
+    labels = np.int32(pass_data.bin_labels)
+    ax.set_xticks(x_ax)
+    ax.set_xticklabels(labels)
 
+    lev_type = pass_data.data.lev_type
+    if lev_type == "channel":
+         level = "channel"
+    elif lev_type == "pressure":
+         level = "level"
     ax.set_ylabel("Count")
-    ax.set_title("Count of used and not-used observations per Channel")
+    ax.set_title(f"Count of used and not-used observations per {level}")
     ax.grid(True, axis="y")
     ax.legend()

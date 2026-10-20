@@ -9,12 +9,14 @@ VARNAME_TO_KT:
   surfacePressure: 33
   brightnessTemperature: 40
   virtualTemperature: 44
+  airTemperature: 44
   ozoneProfile: 87
   bendingAngle: 89
 
 # FOR PLOT TITLES
 # Used for the data source part of plot titles
 KX_TO_DATASRC:
+  120: "Radiosonde Temperature"
   220: "RADIOSONDE WIND"
   326: "AMSUA Metop-B"
   876: "IASI Metop-B"
@@ -25,3 +27,4 @@ KT_TO_DATATYPE:
   4: "Upper air zonal wind"
   5: "Upper air meridional wind"
   40: "Brightness temperature"
+  44: "Upper air virtual temperature"

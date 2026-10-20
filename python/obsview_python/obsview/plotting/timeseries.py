@@ -16,7 +16,7 @@ with open(rc_path, "r") as f:
         rc = yaml.safe_load(f) 
 
 SERIES_CHANNEL = 12
-SERIES_TITLE = "ATMS N20 brightness temperatures: channel 12 (Global)"
+
 
 def _default_month_range(datetimes):
     """
@@ -79,7 +79,11 @@ def plot_series(ts: TimeSeriesData,
     fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(11, 8), sharex=True)
     
     title = f"Exp: {ts.pass_data[0].data.exp} | {starttime.strftime('%d%b%Y %HZ')} - {endtime.strftime('%d%b%Y %HZ')}"
-    title2 = f"{data_src} - {data_type}: channel: {channel} ({region})"
+    
+    if ts.pass_data[0].data.lev_type == "channel":
+        title2 = f"{data_src} - {data_type}: channel {channel} ({region})"
+    elif ts.pass_data[0].data.lev_type == "pressure":
+        title2 = f"{data_src} - {data_type}: level {channel} hPa ({region})"
 
 
     plt.suptitle(title, fontsize=16, fontweight="bold",y = 0.98, ha="center")

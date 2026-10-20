@@ -32,7 +32,7 @@ def create_time_range(starttime:datetime, endtime:datetime) -> List[datetime]:
 
 #Function to compute time averaged statistics from user specified time range (starttime, endtime)
 def aggregate_stats(ts: TimeSeriesData, start_time: datetime, end_time: datetime) -> StatisticsData:
-    lev_count = np.size(ts.pass_stats[0].nobs)
+    lev_count = np.size(ts.pass_data[0].bin_labels)
     
     time_range = create_time_range(start_time, end_time)
     
