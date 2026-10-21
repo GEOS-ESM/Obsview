@@ -53,12 +53,12 @@ selection:
 
   # Analyze one or more instrument/obstype pairs.
   targets:
-    # - instrument: iasi_metop-b
-    #   kx: 876                       
-    #   obtype: radiance
-    #   varname: brightnessTemperature   
-    #   kt: 40 
-    #   level: 220
+    - instrument: iasi_metop-b
+      kx: 876                       
+      obtype: radiance
+      varname: brightnessTemperature   
+      kt: 40 
+      level: 220
 
     - instrument: atms_n20
       kx: 920                       
@@ -67,12 +67,12 @@ selection:
       kt: 40 
       level: 14
 
-    # - instrument: sondes
-    #   kx: 120
-    #   obtype: conventional
-    #   varname: airTemperature
-    #   kt: 44
-    #   level: 500.0   
+    - instrument: sondes
+      kx: 120
+      obtype: conventional
+      varname: airTemperature
+      kt: 44
+      level: 500.0   
 
     # - instrument: atms_n20
     #   title_name: ""ATMS NOAA-20""

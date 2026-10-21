@@ -35,9 +35,7 @@ def create_bins(data: ObservationData) -> BinnedData:
     raise ValueError(f"Unknown lev_type: {data.lev_type!r}")
 
 DEFAULT_PRESSURE_BINS = np.array([5.0,7.0,10.0,20.0,30.0,50.0,70.0,100.0,150.0,200.0,250.0,300.0,400.0,500.0,700.0,850.0,925.0,1000.0])
-#DEFAULT_PRESSURE_BINS = np.array([5.0,7.0,10.0,20.0,30.0,50.0,70.0,100.0,150.0,200.0])
 
-#DEFAULT_PRESSURE_BINS = np.array([100.0,200.0,300.0,500.0,1000.0])
 
 
 def create_pressure_bins(data: ObservationData, bins = DEFAULT_PRESSURE_BINS) -> BinnedData:

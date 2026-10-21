@@ -57,7 +57,7 @@ def plot_stats(pass_data: BinnedData, fail_data: BinnedData, stats: StatisticsDa
 
     plt.subplot(2, 2, 4)
     _panel_sigo(pass_data, stats, lev_type)
-    plt.subplots_adjust(top = 0.82)
+    plt.subplots_adjust(top = 0.86)
 
     return fig
 
@@ -76,7 +76,7 @@ def _panel_nobs(pass_data: BinnedData, fail_data: BinnedData, stats: StatisticsD
                  color="red", label="not used" if i == 0 else "", zorder=1)
         # Green (used) on top, semi-transparent so red shows through.
         plt.barh(y, stats.nobs[i], height=bar_width,
-                 color="green", alpha=0.6,
+                 color="green", alpha=0.7,
                  label="used" if i == 0 else "", zorder=2)
 
     _apply_level_axis(plt.gca(), pass_data, lev_type, "Observation Count")
@@ -86,8 +86,8 @@ def _panel_resstats(binned_data, stats, lev_type):
     n_bins = len(binned_data.bin_labels)
     bin_centers = binned_data.bin_centers
     bin_heights = binned_data.bin_heights
-    bar_width = BAR_H/2
-    offsets = [-1.5, -0.5, 0.5, 1.5]
+    bar_width = BAR_H*0.8
+    offsets = [0.2, -0.2, 0.2, -0.2]
 
     labels = ["Mean o-b", "Mean o-a", "RMS o-b", "RMS o-a"]
     labeled = {"omb": False, "oma": False, "rms_omb": False, "rms_oma": False}
@@ -97,10 +97,10 @@ def _panel_resstats(binned_data, stats, lev_type):
         plt.barh(y + offsets[0] * bar_width, stats.mean_omb[i], height=bar_width,
                  color="cyan", label=labels[0] if not labeled["omb"] else "")
         labeled["omb"] = True
-        plt.barh(y + offsets[2] * bar_width, stats.mean_oma[i], height=bar_width,
-                 color="orange", label=labels[1] if not labeled["oma"] else "")
+        plt.barh(y + offsets[1] * bar_width, stats.mean_oma[i], height=bar_width,
+                 color="gold", label=labels[1] if not labeled["oma"] else "")
         labeled["oma"] = True
-        plt.barh(y + offsets[1] * bar_width, stats.rms_omb[i], height=bar_width,
+        plt.barh(y + offsets[2] * bar_width, stats.rms_omb[i], height=bar_width,
                  color="blue", label=labels[2] if not labeled["rms_omb"] else "")
         labeled["rms_omb"] = True
         plt.barh(y + offsets[3] * bar_width, stats.rms_oma[i], height=bar_width,
@@ -115,8 +115,8 @@ def _panel_jo(binned_data, stats, lev_type):
     n_bins = len(binned_data.bin_labels)
     bin_centers = binned_data.bin_centers
     bin_heights = binned_data.bin_heights
-    bar_width = BAR_H/2
-    offsets = [-1.5, -0.5, 0.5, 1.5]
+    bar_width = BAR_H*0.8
+    offsets = [0.2, -0.2]
 
     labels = ["Jo(b)/p", "Jo(a)/p"]
     labeled = {"job": False, "joa": False}
@@ -138,8 +138,8 @@ def _panel_sigo(binned_data, stats, lev_type):
     n_bins = len(binned_data.bin_labels)
     bin_centers = binned_data.bin_centers
     bin_heights = binned_data.bin_heights
-    bar_width = BAR_H/2
-    offsets = [-1.5, -0.5, 0.5, 1.5]
+    bar_width = BAR_H*0.8
+    offsets = [0.2, 0, -0.2]
 
     labels = ["sigO", "esigO", "esigB"]
     labeled = {"sigo": False, "esigo": False, "esigb": False}
@@ -147,13 +147,13 @@ def _panel_sigo(binned_data, stats, lev_type):
     for i in range(n_bins):
         y = range(n_bins)[i]
         plt.barh(y + offsets[0] * bar_width, stats.mean_sigo[i], height=bar_width,
-                 color="cyan", label=labels[0] if not labeled["sigo"] else "")
+                 color="cyan", label=labels[0] if not labeled["sigo"] else "",zorder=0)
         labeled["sigo"] = True
         plt.barh(y + offsets[1] * bar_width, stats.mean_esigo[i], height=bar_width,
-                 color="orange", label=labels[1] if not labeled["esigo"] else "")
+                 color="orange", label=labels[1] if not labeled["esigo"] else "",zorder=1)
         labeled["esigo"] = True
         plt.barh(y + offsets[2] * bar_width, stats.mean_esigb[i], height=bar_width,
-                 color="black", label=labels[2] if not labeled["esigb"] else "")
+                 color="black", label=labels[2] if not labeled["esigb"] else "",zorder=2)
         labeled["esigb"] = True
 
     _apply_level_axis(plt.gca(),binned_data, lev_type, "Prescribed & Estimated Errors")
@@ -171,12 +171,14 @@ def _apply_level_axis(ax, pass_data: BinnedData, lev_type: str, title_base: str)
     if lev_type == "pressure":
         ax.invert_yaxis()                 
         ax.set_ylabel("Pressure (hPa)")
-        ax.set_title(f"{title_base} vs Pressure")
+        ax.set_title(f"{title_base} vs Pressure",  fontweight = "bold", fontsize = 10)
     elif lev_type == "channel":
         ax.set_ylabel("Channel")
-        ax.set_title(f"{title_base} vs Channel")
+        ax.set_title(f"{title_base} vs Channel",  fontweight = "bold", fontsize = 10)
     else:
         raise ValueError(f"Unknown lev_type: {lev_type!r}")
 
-    ax.grid(True, which="both", linestyle="--", alpha=0.5)
+    #ax.grid(True, which="major", linestyle="--", alpha=0.5)
+    ax.grid(False)
+    ax.axvline(0, color='grey', linestyle='-', linewidth=1, alpha=0.7)
     ax.legend()
