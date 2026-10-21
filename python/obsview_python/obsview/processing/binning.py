@@ -34,8 +34,8 @@ def create_bins(data: ObservationData) -> BinnedData:
         return create_pressure_bins(data)
     raise ValueError(f"Unknown lev_type: {data.lev_type!r}")
 
-#DEFAULT_PRESSURE_BINS = np.array([5.0,7.0,10.0,20.0,30.0,50.0,70.0,100.0,150.0,200.0,250.0,300.0,400.0,500.0,700.0,850.0,925.0,1000.0])
-DEFAULT_PRESSURE_BINS = np.array([5.0,7.0,10.0,20.0,30.0,50.0,70.0,100.0,150.0,200.0])
+DEFAULT_PRESSURE_BINS = np.array([5.0,7.0,10.0,20.0,30.0,50.0,70.0,100.0,150.0,200.0,250.0,300.0,400.0,500.0,700.0,850.0,925.0,1000.0])
+#DEFAULT_PRESSURE_BINS = np.array([5.0,7.0,10.0,20.0,30.0,50.0,70.0,100.0,150.0,200.0])
 
 #DEFAULT_PRESSURE_BINS = np.array([100.0,200.0,300.0,500.0,1000.0])
 
@@ -91,8 +91,8 @@ def create_channel_bins(data: ObservationData) -> BinnedData:
     binned_data = apply_filter(data, sort_indices)
     
     # Now calculate bin indices based on the sorted data
-    indices = np.searchsorted(channels, binned_data.all_lev)
-    
+    indices = np.searchsorted(channels, binned_data.lev)
+
     n = len(channels)
     centers = np.arange(1, n + 1)            
     heights = 0.95 * np.ones(n)      

@@ -54,9 +54,11 @@ def aggregate_stats(ts: TimeSeriesData, start_time: datetime, end_time: datetime
         if datetime in ts.datetimes:    #If specific datetime from range is equal to one of the timeseries datetimes...
             nobs += ts.pass_stats[ts.datetimes.index(datetime)].nobs
             mean_omb += ts.pass_stats[ts.datetimes.index(datetime)].mean_omb
-            rms_omb += (ts.pass_stats[ts.datetimes.index(datetime)].mean_omb)**2
+            rms_omb += ts.pass_stats[ts.datetimes.index(datetime)].rms_omb
+            # rms_omb += (ts.pass_stats[ts.datetimes.index(datetime)].mean_omb)**2
             mean_oma += ts.pass_stats[ts.datetimes.index(datetime)].mean_oma
-            rms_oma += (ts.pass_stats[ts.datetimes.index(datetime)].mean_oma)**2
+            rms_oma += ts.pass_stats[ts.datetimes.index(datetime)].rms_oma
+            # rms_oma += (ts.pass_stats[ts.datetimes.index(datetime)].mean_oma)**2
             mean_job += ts.pass_stats[ts.datetimes.index(datetime)].mean_job
             mean_joa += ts.pass_stats[ts.datetimes.index(datetime)].mean_joa
             mean_sigo += ts.pass_stats[ts.datetimes.index(datetime)].mean_sigo
@@ -67,9 +69,11 @@ def aggregate_stats(ts: TimeSeriesData, start_time: datetime, end_time: datetime
     #Calculate time averaged variables
     avg_nobs = nobs/dt_count
     avg_mean_omb = mean_omb/dt_count
-    avg_rms_omb = np.sqrt(rms_omb/dt_count)
+    avg_rms_omb = rms_omb/dt_count
+    #avg_rms_omb = np.sqrt(rms_omb/dt_count)
     avg_mean_oma = mean_oma/dt_count
-    avg_rms_oma = np.sqrt(rms_oma/dt_count)
+    avg_rms_oma = rms_oma/dt_count
+    # avg_rms_oma = np.sqrt(rms_oma/dt_count)
     avg_mean_job = mean_job/dt_count
     avg_mean_joa = mean_joa/dt_count
     avg_mean_sigo = mean_sigo/dt_count
@@ -129,7 +133,7 @@ def aggregate_pass_binned(ts: TimeSeriesData, start_time:datetime, end_time: dat
     for datetime in time_range:     #Loop over all dts in time range
         dt_count += 1
         if datetime in ts.datetimes:
-            nobs += np.bincount(ts.pass_data[ts.datetimes.index(datetime)].bin_indices)
+            nobs += np.bincount(ts.pass_data[ts.datetimes.index(datetime)].bin_indices, minlength=lev_count)
              
     avg_nobs = nobs/dt_count
     bin_centers = ts.pass_data[0].bin_centers
@@ -174,7 +178,7 @@ def aggregate_fail_binned(ts: TimeSeriesData, start_time:datetime, end_time: dat
     for datetime in time_range:     #Loop over all dts in time range
         dt_count += 1
         if datetime in ts.datetimes:
-            nobs += np.bincount(ts.fail_data[ts.datetimes.index(datetime)].bin_indices)
+            nobs += np.bincount(ts.fail_data[ts.datetimes.index(datetime)].bin_indices, minlength=lev_count)
              
     avg_nobs = nobs/dt_count
     bin_centers = ts.fail_data[0].bin_centers

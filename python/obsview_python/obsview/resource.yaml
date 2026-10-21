@@ -27,4 +27,4 @@ KT_TO_DATATYPE:
   4: "Upper air zonal wind"
   5: "Upper air meridional wind"
   40: "Brightness temperature"
-  44: "Upper air virtual temperature"
+  44: "Upper air temperature"

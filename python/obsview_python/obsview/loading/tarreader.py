@@ -89,7 +89,7 @@ def _process_single_tar(
             pass_data_binned = create_bins(pass_data)
             pass_data_binned = replace(pass_data_binned, ts_range=[starttime, endtime])
             fail_data_binned = create_bins(fail_data)
-
+            print(f"number of bins: {len(pass_data_binned.bin_labels)} for datetime: {pass_data_binned.data.datetime}")
             # Stats
             pass_stats_binned = calculate_stats(pass_data_binned)
             

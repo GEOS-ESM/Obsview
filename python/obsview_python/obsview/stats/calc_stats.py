@@ -14,7 +14,7 @@ def calculate_stats(binned_data: BinnedData) -> StatisticsData:
     n_bins = len(binned_data.bin_labels)
     
     # Count observations per bin
-    nobs = np.bincount(binned_data.bin_indices)
+    nobs = np.bincount(binned_data.bin_indices, minlength=n_bins)
     
     # Find the start index of each bin in the sorted data
     bin_starts = np.searchsorted(binned_data.bin_indices, np.arange(n_bins))
