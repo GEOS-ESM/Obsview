@@ -95,16 +95,16 @@ def _panel_resstats(binned_data, stats, lev_type):
     for i in range(n_bins):
         y = range(n_bins)[i]
         plt.barh(y + offsets[0] * bar_width, stats.mean_omb[i], height=bar_width,
-                 color="cyan", label=labels[0] if not labeled["omb"] else "")
+                 color="cyan", label=labels[0] if not labeled["omb"] else "", zorder = 2)
         labeled["omb"] = True
         plt.barh(y + offsets[1] * bar_width, stats.mean_oma[i], height=bar_width,
-                 color="gold", label=labels[1] if not labeled["oma"] else "")
+                 color="gold", label=labels[1] if not labeled["oma"] else "", zorder = 3)
         labeled["oma"] = True
         plt.barh(y + offsets[2] * bar_width, stats.rms_omb[i], height=bar_width,
-                 color="blue", label=labels[2] if not labeled["rms_omb"] else "")
+                 color="blue", label=labels[2] if not labeled["rms_omb"] else "", zorder = 0)
         labeled["rms_omb"] = True
         plt.barh(y + offsets[3] * bar_width, stats.rms_oma[i], height=bar_width,
-                 color="red", label=labels[3] if not labeled["rms_oma"] else "")
+                 color="red", label=labels[3] if not labeled["rms_oma"] else "", zorder = 1)
         labeled["rms_oma"] = True
 
     _apply_level_axis(plt.gca(), binned_data, lev_type, "Mean & RMS of Obs Residuals")

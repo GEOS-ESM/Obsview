@@ -42,7 +42,7 @@ def plot_purple(ctl_bins: BinnedData, ctl_stats: StatisticsData, exp_stats:Stati
     max_val = np.nanmax(np.abs(diff))
 
 # 2. Add an optional padding margin (e.g., 10% extra space) so bars don't touch the edges
-    padding = 1.10 
+    padding = 2.0 
     x_limit = max_val * padding
 
 # 3. Apply symmetric limits to keep zero dead-center

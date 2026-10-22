@@ -64,6 +64,7 @@ def aggregate_stats(ts: TimeSeriesData, start_time: datetime, end_time: datetime
             mean_sigo += ts.pass_stats[ts.datetimes.index(datetime)].mean_sigo
             mean_esigo += ts.pass_stats[ts.datetimes.index(datetime)].mean_esigo
             mean_esigb += ts.pass_stats[ts.datetimes.index(datetime)].mean_esigb
+            std_omb += ts.pass_stats[ts.datetimes.index(datetime)].std_omb
 
     
     #Calculate time averaged variables
@@ -80,11 +81,8 @@ def aggregate_stats(ts: TimeSeriesData, start_time: datetime, end_time: datetime
     avg_mean_esigo = mean_esigo/dt_count
     avg_mean_esigb = mean_esigb/dt_count
     
-    for datetime in time_range:     #Loop over all dts in time range
-        if datetime in ts.datetimes:
-            std_omb += (ts.pass_stats[ts.datetimes.index(datetime)].mean_omb - avg_mean_omb)**2
 
-    avg_std_omb = np.sqrt(std_omb/dt_count)
+    avg_std_omb = std_omb/dt_count
     
     #Assign time averaged variables to StatisticsData attibutes
 

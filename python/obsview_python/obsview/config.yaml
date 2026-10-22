@@ -37,10 +37,10 @@ experiments:
     base_path: /Users/ltrayano/Desktop/Obsview/Obsview/python/data/IODA files
     label: "Control"          # shown in plot legends/titles
 
-  # - id: x0054
-  #   file_type: "ods"
-  #   base_path: /Users/ltrayano/Desktop/Obsview/Obsview/python/data/ODS files
-  #   label: "Experiment"
+  - id: x0054
+    file_type: "ods"
+    base_path: /Users/ltrayano/Desktop/Obsview/Obsview/python/data/ODS files
+    label: "Experiment"
 
 # ------------------------------------------------------------
 # Analysis selection
@@ -53,12 +53,12 @@ selection:
 
   # Analyze one or more instrument/obstype pairs.
   targets:
-    - instrument: iasi_metop-b
-      kx: 876                       
-      obtype: radiance
-      varname: brightnessTemperature   
-      kt: 40 
-      level: 220
+    # - instrument: iasi_metop-b
+    #   kx: 876                       
+    #   obtype: radiance
+    #   varname: brightnessTemperature   
+    #   kt: 40 
+    #   level: 220
 
     - instrument: atms_n20
       kx: 920                       
@@ -67,12 +67,12 @@ selection:
       kt: 40 
       level: 14
 
-    - instrument: sondes
-      kx: 120
-      obtype: conventional
-      varname: airTemperature
-      kt: 44
-      level: 500.0   
+    # - instrument: sondes
+    #   kx: 120
+    #   obtype: conventional
+    #   varname: airTemperature
+    #   kt: 44
+    #   level: 500.0   
 
     # - instrument: atms_n20
     #   title_name: ""ATMS NOAA-20""
@@ -92,7 +92,7 @@ selection:
 # ------------------------------------------------------------
 plots:
   statistics:   #(4 panel plot)
-    enabled: true
+    enabled: false
     time_averaged: true       # average over the whole time_range
 
   time_series:
@@ -111,8 +111,8 @@ plots:
     stat_type: "omb wo BC"
 
   comparison:
-    enabled: false
-    stat_type: "rms_omb"    #rms or std
+    enabled: true
+    stat_type: "std_omb"    #rms or std
     ratio_bounds: 0.15  #x axis range for comparison ratio (e.g. 0.15 = ±15%)
 
 

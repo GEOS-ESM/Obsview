@@ -25,26 +25,41 @@ def calculate_stats(binned_data: BinnedData) -> StatisticsData:
     mean_oma = np.full(n_bins, np.nan)
     rms_omb = np.full(n_bins, np.nan)
     rms_oma = np.full(n_bins, np.nan)
+    std_omb = np.full(n_bins, np.nan)
+    std_oma = np.full(n_bins, np.nan)
     mean_job = np.full(n_bins, np.nan)
     mean_joa = np.full(n_bins, np.nan)
     mean_sigo = np.full(n_bins, np.nan)
     mean_esigo = np.full(n_bins, np.nan)
     mean_esigb = np.full(n_bins, np.nan)
     
+    
     # Calculate statistics for each bin
     for i in range(n_bins):
         if nobs[i] > 0:
             start, end = bin_starts[i], bin_ends[i]
-            
+            #mean
             mean_omb[i] = np.mean(binned_data.data.omb[start:end])
             mean_oma[i] = np.mean(binned_data.data.oma[start:end])
-            rms_omb[i] = np.sqrt(np.mean(binned_data.data.omb[start:end]**2))
-            rms_oma[i] = np.sqrt(np.mean(binned_data.data.oma[start:end]**2))
             mean_job[i] = np.mean(binned_data.data.job[start:end])
             mean_joa[i] = np.mean(binned_data.data.joa[start:end])
             mean_sigo[i] = np.mean(binned_data.data.sigo[start:end])
             mean_esigo[i] = np.sqrt(np.abs(np.mean(binned_data.data.esigo[start:end])))
             mean_esigb[i] = np.sqrt(np.abs(np.mean(binned_data.data.esigb[start:end])))
+
+            #rms
+            rms_omb[i] = np.sqrt(np.mean(binned_data.data.omb[start:end]**2))
+            rms_oma[i] = np.sqrt(np.mean(binned_data.data.oma[start:end]**2))
+
+
+            #std
+            std_omb[i] = np.std(binned_data.data.omb[start:end], ddof=0)
+            std_oma[i] = np.std(binned_data.data.oma[start:end], ddof=0)
+
+
+
+
+            
     
     return StatisticsData(
         nobs=nobs,
@@ -56,6 +71,9 @@ def calculate_stats(binned_data: BinnedData) -> StatisticsData:
         mean_joa=mean_joa,
         mean_sigo=mean_sigo,
         mean_esigo=mean_esigo,
-        mean_esigb=mean_esigb
+        mean_esigb=mean_esigb,
+
+        std_omb =std_omb,
+        std_oma = std_oma
     )
     ...

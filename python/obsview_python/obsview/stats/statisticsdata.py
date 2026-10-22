@@ -17,4 +17,5 @@ class StatisticsData:
 
 
     std_omb: np.ndarray = field(default_factory = lambda: np.array([]))
+    std_oma: np.ndarray = field(default_factory = lambda: np.array([]))
     ...
