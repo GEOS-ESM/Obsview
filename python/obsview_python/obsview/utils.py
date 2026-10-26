@@ -29,3 +29,7 @@ def _parse_time(s: str) -> datetime:
     # Accept 'YYYY-MM-DD HH
     dt = datetime.strptime(s, "%Y-%m-%d %H")
     return dt.replace(tzinfo=timezone.utc)
+
+def _dt_to_int(dt: datetime) -> int:
+    date_int = int(dt.strftime("%Y%m%d%H"))
+    return date_int

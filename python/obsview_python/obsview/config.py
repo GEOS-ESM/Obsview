@@ -81,7 +81,6 @@ class ComparisonSettings:
 @dataclass
 class CoverageMapSettings:
     enabled: bool
-    map_level: int
     projection: str
 
 @dataclass
@@ -103,7 +102,7 @@ class PlotSettings:
 @dataclass
 class Output:
     mode: str
-    directory: str
+    save_directory: str
     format: str
     dpi: int
     filename_template: str
@@ -118,8 +117,8 @@ class Config:
     data: DataTemplate
     experiments: List[Experiment]
     selection: Selection
-    plots: PlotSettings                      # or a typed PlotSettings
-    output: dict                     # or a typed OutputSettings
+    plots: PlotSettings                      
+    output: Output                     
 
 
 

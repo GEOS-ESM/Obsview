@@ -61,7 +61,7 @@ def create_pressure_bins(data: ObservationData, bins = DEFAULT_PRESSURE_BINS) ->
     # 5. Sort mapped bin classifications
     sorted_raw_indices = raw_indices[sort_indices]
     
-    # 6. Shift indices down by 1 so your n bins are 0-indexed (0 to n-1)
+    # 6. Shift indices down by 1 so n bins are 0-indexed (0 to n-1)
     bounded_indices = np.clip(sorted_raw_indices - 1, 0, len(bins) - 1)
     indices = bounded_indices
 

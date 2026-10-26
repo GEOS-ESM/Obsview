@@ -66,8 +66,12 @@ def _coverage_map_panel(ax, pass_data: BinnedData, fail_data: BinnedData,
         fail_lon, fail_lat = fail_data.data.lon, fail_data.data.lat
         lev_str = "all channels"
     else:
-        pass_sel = pass_data.data.lev == map_level
-        fail_sel = fail_data.data.lev == map_level
+        level_index = np.where(pass_data.bin_labels == map_level)[0]
+        pass_sel = pass_data.bin_indices == level_index
+        fail_sel = fail_data.bin_indices == level_index
+        
+        # pass_sel = pass_data.data.lev == map_level
+        # fail_sel = fail_data.data.lev == map_level
         pass_lon, pass_lat = pass_data.data.lon[pass_sel], pass_data.data.lat[pass_sel]
         fail_lon, fail_lat = fail_data.data.lon[fail_sel], fail_data.data.lat[fail_sel]
         if pass_data.data.lev_type == "channel":

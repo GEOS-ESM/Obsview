@@ -14,11 +14,9 @@ pipeline math itself.
 #TODO: Reconcile start and endtime helper functions(i.e. have the datetime conversion happen once)
 
 import os
-import glob
 import logging
-from datetime import datetime, timedelta, timezone
-from concurrent.futures import ProcessPoolExecutor
-from typing import Dict, List
+from datetime import datetime
+from typing import Dict
 from dataclasses import replace
 
 import matplotlib.pyplot as plt
@@ -26,12 +24,10 @@ import matplotlib.pyplot as plt
 from .config import Config, Experiment, Target
 
 # Time series construction + plotting (existing modules).
-from .utils import _parse_time
+from .utils import _parse_time, _dt_to_int
 from .loading.timeseriesdata import TimeSeriesData
 from .loading.search import discover_ods_files, discover_ioda_files
 from .loading.buildtimeseries import build_ts_from_ods, build_ts_from_tar
-from .processing.binning import BinnedData
-from .stats.statisticsdata import StatisticsData
 from .stats.aggregate import aggregate_stats, aggregate_pass_binned, aggregate_fail_binned
 from .plotting.statsplot import plot_stats
 from .plotting.timeseries import plot_series
@@ -71,6 +67,7 @@ def run(cfg: Config) -> None:
         plt.show()
 
     #log.info("Run complete.")
+    print(f"Run complete")
 
 # ============================================================
 # Runtime settings
@@ -133,7 +130,7 @@ def _load_all_experiments(cfg: Config, target: Target, start: datetime, end: dat
         expid = exp.id
         file_type = exp.file_type
         if file_type == "ods":
-            print("Loading ODS files...")
+            print(f"Loading ODS files for {instrument}...")
             dir_template = cfg.data.ods.dir_template
             file_pattern = cfg.data.ods.file_pattern
             file_time_format = cfg.data.ods.file_time_format
@@ -143,7 +140,7 @@ def _load_all_experiments(cfg: Config, target: Target, start: datetime, end: dat
             ts_by_exp[exp.id] = ts
             print("ODS files loaded")
         elif file_type == "ioda":
-            print("Loading IODA files...")
+            print(f"Loading IODA files for {instrument}...")
             dir_template = cfg.data.ioda.dir_template
             file_pattern = cfg.data.ioda.file_pattern
             file_time_format = cfg.data.ioda.file_time_format
@@ -186,18 +183,17 @@ def _make_enabled_plots(cfg: Config, target: Target,
     
 
     if plots.statistics.enabled:
-        _dispatch_statistics(cfg, ag_by_exp)
+        _dispatch_statistics(cfg, target, ag_by_exp, start, end)
 
 
     if plots.coverage_map.enabled:
-        _dispatch_coverage(cfg,target,ts_by_exp)
+        _dispatch_coverage(cfg,target,ts_by_exp, start, end)
 
     if plots.comparison.enabled:
         _dispatch_comparison(cfg, ag_by_exp)
 
     if plots.time_series.enabled:
-        #_dispatch_time_series(cfg,target,ts_by_exp, start, end)
-        _dispatch_time_series(cfg,target,ts_by_exp)
+        _dispatch_time_series(cfg,target,ts_by_exp, start, end)
 
 
         ...
@@ -206,29 +202,44 @@ def _make_enabled_plots(cfg: Config, target: Target,
 
 
 
-def _dispatch_statistics(cfg, ag_by_exp) -> None:
+def _dispatch_statistics(cfg: Config, target, ag_by_exp, start: datetime, end: datetime) -> None:
     iter_values = iter(ag_by_exp.values())
     ctl_values = next(iter_values)
     stats = ctl_values[0]
     pass_data = ctl_values[1]
     fail_data = ctl_values[2]
+
+    exp = next(iter(ag_by_exp))
+    start = _dt_to_int(start)
+    end = _dt_to_int(end)
+
     fig = plot_stats(pass_data, fail_data, stats)
+    _finalize(cfg,fig,"stats",target,exp, start, end)
     ...
 
 
-def _dispatch_time_series(cfg, target: Target, ts_by_exp, start=None, end=None) -> None:
+def _dispatch_time_series(cfg, target, ts_by_exp, start: datetime, end: datetime) -> None:
     level = target.level
+    start = _dt_to_int(start)
+    end = _dt_to_int(end)
+
     for exp in ts_by_exp:
         ts = ts_by_exp[exp]
-        fig = plot_series(ts, channel=level, start=start, end=end)
+        fig = plot_series(ts, channel=level, start=None, end=None)
+        _finalize(cfg, fig, "timeseries", target, exp, start, end)
+
+
     ...
 
-def _dispatch_coverage(cfg: Config,target:Target, ts_by_exp) -> None:
+def _dispatch_coverage(cfg: Config,target:Target, ts_by_exp, start, end) -> None:
     level = target.level
+    start = _dt_to_int(start)
+    end = _dt_to_int(end)
     for exp in ts_by_exp:
         pass_data = ts_by_exp[exp].pass_data[0]
         fail_data = ts_by_exp[exp].fail_data[0]
-    fig = plot_coverage(pass_data, fail_data, map_level=level)
+        fig = plot_coverage(pass_data, fail_data, map_level=level)
+        _finalize(cfg, fig, "coverage", target, exp, start, end)
 
 def _dispatch_comparison(cfg: Config, ag_by_exp) -> None:
     stats_type = cfg.plots.comparison.stat_type
@@ -245,24 +256,24 @@ def _dispatch_comparison(cfg: Config, ag_by_exp) -> None:
 # Output handling
 # ============================================================
 
-def _finalize(cfg: Config, fig, plot: str, target: Target, exp: str) -> None:
+def _finalize(cfg: Config, fig, plot: str, target: Target, exp: str, start: int, end: int) -> None:
     """Honor output settings: save, show, or both."""
     out = cfg.output
-    mode = out.get("mode", "show")
+    mode = out.mode
 
     if mode in ("save", "both"):
-        os.makedirs(out["directory"], exist_ok=True)
-        fname = out.get("filename_template", "{plot}_{instrument}_{exp}").format(
-            plot=plot, instrument=target.instrument, exp=exp,
+        os.makedirs(out.save_directory, exist_ok=True)
+        fname = out.filename_template.format(
+            plot=plot, instrument=target.instrument, exp=exp,start = start, end = end
         )
-        path = os.path.join(out["directory"], f"{fname}.{out.get('format','png')}")
-        fig.savefig(path, dpi=out.get("dpi", 300), bbox_inches="tight")
+        path = os.path.join(out.save_directory, f"{fname}.{out.format}")
+        fig.savefig(path, dpi=out.dpi, bbox_inches="tight")
         log.info("Saved %s", path)
 
     if mode in ("show", "both"):
         plt.show()
 
-    plt.close(fig)   # free memory, important in long batch runs
+    plt.close(fig)   
 
 
 

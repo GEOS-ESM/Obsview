@@ -37,10 +37,10 @@ experiments:
     base_path: /Users/ltrayano/Desktop/Obsview/Obsview/python/data/IODA files
     label: "Control"          # shown in plot legends/titles
 
-  - id: x0054
-    file_type: "ods"
-    base_path: /Users/ltrayano/Desktop/Obsview/Obsview/python/data/ODS files
-    label: "Experiment"
+  # - id: x0054
+  #   file_type: "ods"
+  #   base_path: /Users/ltrayano/Desktop/Obsview/Obsview/python/data/ODS files
+  #   label: "Experiment"
 
 # ------------------------------------------------------------
 # Analysis selection
@@ -53,12 +53,12 @@ selection:
 
   # Analyze one or more instrument/obstype pairs.
   targets:
-    # - instrument: iasi_metop-b
-    #   kx: 876                       
-    #   obtype: radiance
-    #   varname: brightnessTemperature   
-    #   kt: 40 
-    #   level: 220
+    - instrument: iasi_metop-b
+      kx: 876                       
+      obtype: radiance
+      varname: brightnessTemperature   
+      kt: 40 
+      level: 262
 
     - instrument: atms_n20
       kx: 920                       
@@ -67,12 +67,12 @@ selection:
       kt: 40 
       level: 14
 
-    # - instrument: sondes
-    #   kx: 120
-    #   obtype: conventional
-    #   varname: airTemperature
-    #   kt: 44
-    #   level: 500.0   
+    - instrument: sondes
+      kx: 120
+      obtype: conventional
+      varname: airTemperature
+      kt: 44
+      level: 70.0   
 
     # - instrument: atms_n20
     #   title_name: ""ATMS NOAA-20""
@@ -92,26 +92,24 @@ selection:
 # ------------------------------------------------------------
 plots:
   statistics:   #(4 panel plot)
-    enabled: false
+    enabled: true
     time_averaged: true       # average over the whole time_range
 
   time_series:
-    enabled: false
+    enabled: true
     date_tick_interval_days: 2
 
   coverage_map:
-    enabled: false
-    map_level: 13           # null => all vertical levels
+    enabled: true
     projection: PlateCarree
 
   monitoring_map: 
     enabled: false
-    map_level: 13
     projection: PlateCarree
     stat_type: "omb wo BC"
 
   comparison:
-    enabled: true
+    enabled: false
     stat_type: "std_omb"    #rms or std
     ratio_bounds: 0.15  #x axis range for comparison ratio (e.g. 0.15 = ±15%)
 
@@ -120,8 +118,8 @@ plots:
 # Output settings
 # ------------------------------------------------------------
 output:
-  mode: show                  # 'save', 'show', or 'both'
-  directory: ./output
+  mode: save                  # 'save', 'show', or 'both'
+  save_directory: /Users/ltrayano/Desktop/Obsview/Test Figures/output
   format: png                 # png | pdf | svg
   dpi: 300
-  filename_template: "{plot}_{instrument}_{start}_{end}"
+  filename_template: "{exp}.{plot}.{instrument}.{start}-{end}"
