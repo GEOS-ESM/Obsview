@@ -32,15 +32,15 @@ data:
 # Experiment locations
 # ------------------------------------------------------------
 experiments:
-  - id: j54rp1
-    file_type: "ioda"
-    base_path: /Users/ltrayano/Desktop/Obsview/Obsview/python/data/IODA files
-    label: "Control"          # shown in plot legends/titles
+  # - id: j54rp1
+  #   file_type: "ioda"
+  #   base_path: /Users/ltrayano/Desktop/Obsview/Obsview/python/data/IODA files
+  #   label: "Control"          # shown in plot legends/titles
 
-  # - id: x0054
-  #   file_type: "ods"
-  #   base_path: /Users/ltrayano/Desktop/Obsview/Obsview/python/data/ODS files
-  #   label: "Experiment"
+  - id: x0054
+    file_type: "ods"
+    base_path: /Users/ltrayano/Desktop/Obsview/Obsview/python/data/ODS files
+    label: "Experiment"
 
 # ------------------------------------------------------------
 # Analysis selection
@@ -50,29 +50,29 @@ selection:
     start: "2026-01-01 06"
     end:   "2026-01-01 18"
     
+  #region: "global"
 
-  # Analyze one or more instrument/obstype pairs.
   targets:
-    - instrument: iasi_metop-b
-      kx: 876                       
-      obtype: radiance
-      varname: brightnessTemperature   
-      kt: 40 
-      level: 262
+    # - instrument: iasi_metop-b
+    #   kx: 876                       
+    #   obtype: radiance
+    #   varname: brightnessTemperature   
+    #   kt: 40 
+    #   level: 262
 
-    - instrument: atms_n20
-      kx: 920                       
-      obtype: radiance
-      varname: brightnessTemperature   
-      kt: 40 
-      level: 14
+    # - instrument: atms_n20
+    #   kx: 920                       
+    #   obtype: radiance
+    #   varname: brightnessTemperature   
+    #   kt: 40 
+    #   level: all
 
     - instrument: sondes
       kx: 120
       obtype: conventional
       varname: airTemperature
       kt: 44
-      level: 70.0   
+      level: 70.0   #all   
 
     # - instrument: atms_n20
     #   title_name: ""ATMS NOAA-20""
@@ -96,11 +96,11 @@ plots:
     time_averaged: true       # average over the whole time_range
 
   time_series:
-    enabled: true
+    enabled: false
     date_tick_interval_days: 2
 
   coverage_map:
-    enabled: true
+    enabled: false
     projection: PlateCarree
 
   monitoring_map: 
@@ -123,3 +123,4 @@ output:
   format: png                 # png | pdf | svg
   dpi: 300
   filename_template: "{exp}.{plot}.{instrument}.{start}-{end}"
+  filename_lev_template: "{exp}.{plot}.L{level}.{instrument}.{start}-{end}"

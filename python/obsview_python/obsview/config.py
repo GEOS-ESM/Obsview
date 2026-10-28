@@ -106,6 +106,7 @@ class Output:
     format: str
     dpi: int
     filename_template: str
+    filename_lev_template: str
 
 
 

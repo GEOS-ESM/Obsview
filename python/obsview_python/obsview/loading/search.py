@@ -42,6 +42,10 @@ def _ods_candidate_file(base_path: str, expid: str, instrument: str,
     # Filename token for this datetime, e.g. '20260101_00z'.
     time_token = dt.strftime(file_time_format)
 
+    #Convert IODA instruments to conv
+    if instrument in ("sondes", "satwind", "scatwind", "aircraft_temperature", "aircraft_wind"):
+        instrument = "conv"
+
     pattern = file_pattern.format(expid=expid, instrument=instrument, file_time_format = time_token)
     
     return sorted(glob.glob(os.path.join(directory, pattern)))

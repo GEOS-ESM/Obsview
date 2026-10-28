@@ -15,6 +15,7 @@ pipeline math itself.
 
 import os
 import logging
+import numpy as np
 from datetime import datetime
 from typing import Dict
 from dataclasses import replace
@@ -225,8 +226,15 @@ def _dispatch_time_series(cfg, target, ts_by_exp, start: datetime, end: datetime
 
     for exp in ts_by_exp:
         ts = ts_by_exp[exp]
-        fig = plot_series(ts, channel=level, start=None, end=None)
-        _finalize(cfg, fig, "timeseries", target, exp, start, end)
+        if level == "all":
+            for lev in ts.pass_data[0].bin_labels:
+                level_num = np.where(ts.pass_data[0].bin_labels == lev)[0][0]+1
+                fig = plot_series(ts, channel=lev, start=None, end=None)
+                _finalize_lev(cfg, fig, "timeseries", target, exp, start, end, level_num)
+        else:
+            level_num = np.where(ts.pass_data[0].bin_labels == level)[0][0]+1
+            fig = plot_series(ts, channel=level, start=None, end=None)
+            _finalize_lev(cfg, fig, "timeseries", target, exp, start, end, level_num)
 
 
     ...
@@ -238,8 +246,16 @@ def _dispatch_coverage(cfg: Config,target:Target, ts_by_exp, start, end) -> None
     for exp in ts_by_exp:
         pass_data = ts_by_exp[exp].pass_data[0]
         fail_data = ts_by_exp[exp].fail_data[0]
-        fig = plot_coverage(pass_data, fail_data, map_level=level)
-        _finalize(cfg, fig, "coverage", target, exp, start, end)
+        if level == "all":
+            for lev in pass_data.bin_labels:
+                level_num = np.where(pass_data.bin_labels == lev)[0][0]+1
+                fig = plot_coverage(pass_data, fail_data, map_level=lev)
+                _finalize_lev(cfg, fig, "coverage", target, exp, start, end, level_num)
+        else: 
+            level_num = np.where(pass_data.bin_labels == lev)[0][0]+1
+            fig = plot_coverage(pass_data, fail_data, map_level=level)
+            _finalize_lev(cfg, fig, "coverage", target, exp, start, end, level_num)
+
 
 def _dispatch_comparison(cfg: Config, ag_by_exp) -> None:
     stats_type = cfg.plots.comparison.stat_type
@@ -272,7 +288,25 @@ def _finalize(cfg: Config, fig, plot: str, target: Target, exp: str, start: int,
 
     if mode in ("show", "both"):
         plt.show()
+    plt.close(fig)
 
+#Finalize function for plots that are level specific(e.g. time series)
+def _finalize_lev(cfg: Config, fig, plot: str, target: Target, exp: str, start: int, end: int, level) -> None:
+    """Honor output settings: save, show, or both."""
+    out = cfg.output
+    mode = out.mode
+
+    if mode in ("save", "both"):
+        os.makedirs(out.save_directory, exist_ok=True)
+        fname = out.filename_lev_template.format(
+            plot=plot, instrument=target.instrument, exp=exp,start = start, end = end, level = level
+        )
+        path = os.path.join(out.save_directory, f"{fname}.{out.format}")
+        fig.savefig(path, dpi=out.dpi, bbox_inches="tight")
+        log.info("Saved %s", path)
+
+    if mode in ("show", "both"):
+        plt.show()
     plt.close(fig)   
 
 
