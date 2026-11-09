@@ -1,16 +1,13 @@
 #Module containing IODAReader class and relevant functions
-import yaml
 import numpy as np
-from pathlib import Path
 from netCDF4 import Dataset
 from dataclasses import replace
 from datetime import datetime, timezone
 from .observationdata import ObservationData
+from ..reference import Reference
 
 
-rc_path = Path(__file__).parent / '../resource.yaml'
-with open(rc_path, "r") as f:
-        rc = yaml.safe_load(f) 
+
 
 class IODAReader:
     
@@ -27,7 +24,7 @@ class IODAReader:
         nc.set_auto_mask(False)
         return nc
     #Load data and flatten incoming arrays
-    def _load_data(self, nc: Dataset, varname: str, kx: int) -> dict: 
+    def _load_data(self, nc: Dataset, varname: str, kx: int, ref: Reference) -> dict: 
         lev_type = self._get_lev_type(varname)
         n_locations = np.size(nc.variables["Location"][:])
 
@@ -40,7 +37,7 @@ class IODAReader:
         "datetime": nc.groups["MetaData"].variables["dateTime"][:].flatten(),
         "bias": nc.groups["ObsBias0"].variables[varname][:].flatten(),
         "kx": kx,     #No better way to retrieve kx/sid for now
-        "kt": rc['VARNAME_TO_KT'].get(varname)       
+        "kt": ref.get_kt_from_varname(varname)      
         }
         
 
@@ -141,10 +138,10 @@ class IODAReader:
         ...
 
     
-    def read(self, filename: str, varname: str, kx: int) -> ObservationData:
+    def read(self, filename: str, varname: str, kx: int, ref: Reference) -> ObservationData:
 
         nc = self._open_file(filename)
-        raw = self._load_data(nc, varname, kx)
+        raw = self._load_data(nc, varname, kx, ref)
         raw = self._calc_variables(raw)
         fill_values = self._load_fill_values(nc, varname)
         obj = self._create_data_object(raw, fill_values, varname)

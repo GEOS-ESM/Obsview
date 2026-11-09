@@ -1,0 +1,189 @@
+# Main reference file to map:
+#   IODA to ODS naming conventions
+#   Instrument/variable pairs to respective level sets
+#   Plot titles
+#############################################################################################
+level_sets:
+  default_pressure: [5.0, 7.0, 10.0, 20.0, 30.0, 50.0, 70.0, 100.0, 150.0, 200.0, 250.0, 300.0, 400.0, 500.0, 700.0, 850.0, 925.0, 1000.0]
+  extended_pressure: [0.24, 0.5, 1.0, 2.0, 4.0, 5.0, 7.0, 10.0, 20.0, 30.0, 50.0, 70.0, 100.0, 150.0, 200.0, 250.0, 300.0, 400.0, 500.0, 700.0, 850.0, 925.0, 1000.0]
+  lower_trop: [300.0, 400.0, 500.0, 700.0, 850.0, 925.0, 1000.0]
+  upper_trop: [200.0, 250.0, 300.0, 400.0, 500.0, 700.0, 850.0, 925.0, 1000.0]
+  mid_trop: [250.0, 300.0, 400.0, 500.0]
+  mls55_levels: [0.10, 0.16, 0.25, 0.40, 0.64, 1.01, 1.60, 2.54, 4.03, 6.39, 10.13, 16.01, 25.43, 40.33, 63.94, 101.32, 160.09, 254.33, 403.27, 639.36, 1013.25]
+  ompslp_levels: [0.10, 0.15, 0.22, 0.32, 0.46, 0.68, 1.00, 1.21, 1.47, 1.78, 2.15, 2.61, 3.16, 3.83, 4.64, 5.62, 6.81, 8.25, 10.00, 12.12, 14.68, 17.78, 21.54, 26.10, 31.62, 38.31, 46.42, 56.23, 68.13, 82.54, 100.00, 121.15, 146.78, 177.83, 215.44, 261.02]
+  o3lev_aura_levels: [0.1, 0.16, 0.25, 0.4, 0.5, 0.7, 1, 1.6, 2.54, 4.03, 5, 7, 10, 20, 30, 40, 50, 70, 100, 250]
+
+
+
+
+##############################################################################################
+instruments:
+  # Aircraft observations
+  aircraft_temperature: {title: "Aircraft Temperature", obtype: conventional}
+  aircraft_wind: {title: "Aircraft Wind", obtype: conventional}
+  
+  # Radiosonde observations
+  sondes: {title: "Radiosonde", obtype: conventional}
+  
+  # Pilot balloon
+  pibal: {title: "Pilot Balloon", obtype: conventional}
+  
+  # Surface observations
+  sfc: {title: "Surface", obtype: conventional}
+  sfcship: {title: "Surface Ship", obtype: conventional}
+  
+  # Satellite wind observations
+  satwind: {title: "Satellite Wind", obtype: conventional}
+  scatwind: {title: "Scatterometer Wind", obtype: conventional}
+  
+  # GPS Radio Occultation
+  gps: {title: "GPS Radio Occultation", obtype: gps}
+  
+  # AIRS
+  airs_aqua: {title: "AIRS Aqua", obtype: radiance}
+  
+  # AMSU-A instruments
+  amsua_metop-b: {title: "AMSU-A METOP-B", obtype: radiance}
+  amsua_metop-c: {title: "AMSU-A METOP-C", obtype: radiance}
+  
+  # ATMS instruments
+  atms_n20: {title: "ATMS NOAA-20", obtype: radiance}
+  atms_n21: {title: "ATMS NOAA-21", obtype: radiance}
+  atms_npp: {title: "ATMS NPP", obtype: radiance}
+  
+  # AVHRR instruments
+  avhrr3_metop-b: {title: "AVHRR-3 METOP-B", obtype: radiance}
+  avhrr3_metop-c: {title: "AVHRR-3 METOP-C", obtype: radiance}
+  
+  # CrIS instruments
+  cris-fsr_n20: {title: "CrIS-FSR NOAA-20", obtype: radiance}
+  cris-fsr_n21: {title: "CrIS-FSR NOAA-21", obtype: radiance}
+  
+  # GMI
+  gmi_gpm: {title: "GMI GPM", obtype: radiance}
+  
+  # IASI instruments
+  iasi_metop-b: {title: "IASI METOP-B", obtype: radiance}
+  iasi_metop-c: {title: "IASI METOP-C", obtype: radiance}
+  
+  # MHS instruments
+  mhs_metop-b: {title: "MHS METOP-B", obtype: radiance}
+  mhs_metop-c: {title: "MHS METOP-C", obtype: radiance}
+  
+  # MLS
+  mls55_aura: {title: "MLS-55 Aura", obtype: conventional}
+  
+  # OMPS instruments
+  ompslpnc_n21: {title: "OMPS-LP-NC NOAA-21", obtype: ozone}
+  ompslpnc_npp: {title: "OMPS-LP-NC NPP", obtype: ozone}
+  ompsnm_npp: {title: "OMPS-NM NPP", obtype: ozone}
+  
+  # AMSR2
+  amsr2_gcom-w1: {title: "AMSR2 GCOM-W1", obtype: radiance}
+  
+  # SSMIS
+  ssmis_f17: {title: "SSMIS F17", obtype: radiance}
+
+
+
+
+################################################################################################
+variables:
+  # Radiance variables
+  brightnessTemperature: {kt: 40, title: "Brightness Temperature"}
+  
+  # Conventional variables
+  airTemperature: {kt: 44, title: "Air Temperature"}
+  virtualTemperature: {kt: 44, title: "Virtual Temperature"}
+  specificHumidity: {kt: 11, title: "Specific Humidity"}
+  windEastward: {kt: 4, title: "Eastward Wind"}
+  windNorthward: {kt: 5, title: "Northward Wind"}
+  
+  # GPS RO variables
+  bendingAngle: {kt: 89, title: "Bending Angle"}
+  
+  # Ozone variables
+  ozoneProfile: {kt: 87, title: "Ozone Profile"}
+  aerosolOpticalDepth: {kt: 21, title: "Aerosol Optical Depth"}
+
+
+
+
+#################################################################################################
+observations:
+  # Aircraft observations
+  - {instrument: aircraft_temperature, varname: airTemperature, kx: 130, level_type: pressure, levels: upper_trop}
+  - {instrument: aircraft_temperature, varname: airTemperature, kx: 131, level_type: pressure, levels: upper_trop}
+  - {instrument: aircraft_wind, varname: windEastward, kx: 210, level_type: pressure, levels: upper_trop}
+  - {instrument: aircraft_wind, varname: windNorthward, kx: 210, level_type: pressure, levels: upper_trop}
+  
+  # Radiosonde observations
+  - {instrument: sondes, varname: airTemperature, kx: 120, level_type: pressure, levels: default_pressure}
+  - {instrument: sondes, varname: virtualTemperature, kx: 120, level_type: pressure, levels: default_pressure}
+  - {instrument: sondes, varname: specificHumidity, kx: 120, level_type: pressure, levels: lower_trop}
+  - {instrument: sondes, varname: windEastward, kx: 220, level_type: pressure, levels: upper_trop}
+  - {instrument: sondes, varname: windNorthward, kx: 220, level_type: pressure, levels: upper_trop}
+  
+  # Pilot balloon
+  - {instrument: pibal, varname: windEastward, kx: 221, level_type: pressure, levels: upper_trop}
+  - {instrument: pibal, varname: windNorthward, kx: 221, level_type: pressure, levels: upper_trop}
+  
+  # Surface observations
+  - {instrument: sfc, varname: airTemperature, kx: 180, level_type: surface, levels: null}
+  - {instrument: sfc, varname: specificHumidity, kx: 180, level_type: surface, levels: null}
+  - {instrument: sfcship, varname: airTemperature, kx: 180, level_type: surface, levels: null}
+  - {instrument: sfcship, varname: specificHumidity, kx: 180, level_type: surface, levels: null}
+  
+  # Satellite winds
+  - {instrument: satwind, varname: windEastward, kx: 240, level_type: pressure, levels: upper_trop}
+  - {instrument: satwind, varname: windNorthward, kx: 240, level_type: pressure, levels: upper_trop}
+  - {instrument: scatwind, varname: windEastward, kx: 280, level_type: surface, levels: null}
+  - {instrument: scatwind, varname: windNorthward, kx: 280, level_type: surface, levels: null}
+  
+  # GPS RO
+  - {instrument: gps, varname: bendingAngle, kx: 3, level_type: pressure, levels: extended_pressure}
+  
+  # AIRS
+  - {instrument: airs_aqua, varname: brightnessTemperature, kx: 49, level_type: channel, levels: "1-281"}
+  
+  # AMSU-A
+  - {instrument: amsua_metop-b, varname: brightnessTemperature, kx: 326, level_type: channel, levels: "1-15"}
+  - {instrument: amsua_metop-c, varname: brightnessTemperature, kx: 327, level_type: channel, levels: "1-15"}
+  
+  # ATMS
+  - {instrument: atms_n20, varname: brightnessTemperature, kx: 920, level_type: channel, levels: "1-22"}
+  - {instrument: atms_n21, varname: brightnessTemperature, kx: 921, level_type: channel, levels: "1-22"}
+  - {instrument: atms_npp, varname: brightnessTemperature, kx: 900, level_type: channel, levels: "1-22"}
+  
+  # AVHRR
+  - {instrument: avhrr3_metop-b, varname: brightnessTemperature, kx: 626, level_type: channel, levels: "1-3"}
+  - {instrument: avhrr3_metop-c, varname: brightnessTemperature, kx: 627, level_type: channel, levels: "1-3"}
+  
+  # CrIS
+  - {instrument: cris-fsr_n20, varname: brightnessTemperature, kx: 960, level_type: channel, levels: "1-431"}
+  - {instrument: cris-fsr_n21, varname: brightnessTemperature, kx: 961, level_type: channel, levels: "1-431"}
+  
+  # GMI
+  - {instrument: gmi_gpm, varname: brightnessTemperature, kx: 706, level_type: channel, levels: "1-13"}
+  
+  # IASI
+  - {instrument: iasi_metop-b, varname: brightnessTemperature, kx: 876, level_type: channel, levels: "1-616"}
+  - {instrument: iasi_metop-c, varname: brightnessTemperature, kx: 877, level_type: channel, levels: "1-616"}
+  
+  # MHS
+  - {instrument: mhs_metop-b, varname: brightnessTemperature, kx: 826, level_type: channel, levels: "1-5"}
+  - {instrument: mhs_metop-c, varname: brightnessTemperature, kx: 827, level_type: channel, levels: "1-5"}
+  
+  # MLS
+  - {instrument: mls55_aura, varname: ozoneProfile, kx: 330, level_type: pressure, levels: mls55_levels}
+  
+  # OMPS
+  - {instrument: ompslpnc_n21, varname: ozoneProfile, kx: 358, level_type: pressure, levels: ompslp_levels}
+  - {instrument: ompslpnc_npp, varname: ozoneProfile, kx: 337, level_type: pressure, levels: ompslp_levels}
+  - {instrument: ompsnm_npp, varname: aerosolOpticalDepth, kx: 427, level_type: surface, levels: null}
+  
+  # AMSR2
+  - {instrument: amsr2_gcom-w1, varname: brightnessTemperature, kx: 550, level_type: channel, levels: "1-14"}
+  
+  # SSMIS
+  - {instrument: ssmis_f17, varname: brightnessTemperature, kx: 717, level_type: channel, levels: "1-24"}

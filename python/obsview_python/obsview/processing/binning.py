@@ -3,16 +3,14 @@ import numpy as np
 from typing import Optional, List
 from dataclasses import dataclass
 from ..loading.observationdata import ObservationData
+from ..reference import Reference, Observation
 from .filtering import apply_filter
 
 @dataclass
 class BinnedData:
     data: ObservationData           #Rearranged data by bin
-    bin_centers: np.ndarray         #Averaged value between bin levels (used for plotting)
-           
-    bin_labels: np.ndarray          #Array of each bin level (unique)
-    bin_heights: np.ndarray
     bin_indices: Optional[np.ndarray] = None   
+    bin_labels: Optional[np.ndarray] = None   
     #This should eventually replace the large ObservationData attribute
     nobs: Optional[np.ndarray] = None       #array with number of observations (int) for each vertical level 
     is_ts: Optional[bool] = None         #For plotting, tells us if the binned data came from a time series object
@@ -27,18 +25,20 @@ class BinnedData:
 
 
 
-def create_bins(data: ObservationData) -> BinnedData:
+def create_bins(data: ObservationData, obs: Observation, ref: Reference) -> BinnedData:
     if data.lev_type == "channel":
         return create_channel_bins(data)
     elif data.lev_type == "pressure":
-        return create_pressure_bins(data)
+        #Get pressure level set    
+        bins = np.array(ref.get_pressure_levels(obs))
+        return create_pressure_bins(data, bins)
     raise ValueError(f"Unknown lev_type: {data.lev_type!r}")
 
-DEFAULT_PRESSURE_BINS = np.array([5.0,7.0,10.0,20.0,30.0,50.0,70.0,100.0,150.0,200.0,250.0,300.0,400.0,500.0,700.0,850.0,925.0,1000.0])
 
 
 
-def create_pressure_bins(data: ObservationData, bins = DEFAULT_PRESSURE_BINS) -> BinnedData:
+
+def create_pressure_bins(data: ObservationData, bins = np.ndarray) -> BinnedData:
     if data.file_type == 'ioda':
         pressure_hpa = data.lev / 100.0
     else: 
@@ -65,17 +65,12 @@ def create_pressure_bins(data: ObservationData, bins = DEFAULT_PRESSURE_BINS) ->
     bounded_indices = np.clip(sorted_raw_indices - 1, 0, len(bins) - 1)
     indices = bounded_indices
 
-    # 7. Match dimensions: centers, labels, and heights will all be exactly size 18!
-    centers = bins
     labels = bins  
-    heights = np.diff(edges) 
 
     obj = BinnedData(
         data=binned_data,
-        bin_centers=centers,
         bin_indices=indices,
-        bin_labels=labels,
-        bin_heights=heights,
+        bin_labels=labels
     )
     return obj
 
@@ -90,16 +85,11 @@ def create_channel_bins(data: ObservationData) -> BinnedData:
     
     # Now calculate bin indices based on the sorted data
     indices = np.searchsorted(channels, binned_data.lev)
-
-    n = len(channels)
-    centers = np.arange(1, n + 1)            
-    heights = 0.95 * np.ones(n)      
+         
 
     obj = BinnedData(
         data=binned_data,
-        bin_centers=centers,
         bin_indices=indices,
-        bin_labels=channels,
-        bin_heights=heights
+        bin_labels=channels
     )
     return obj

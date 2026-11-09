@@ -1,22 +1,20 @@
 #Module containing plotting functions similar to the "purple" plots
 #Plots time averaged statistics
-import yaml
 import numpy as np
-from pathlib import Path
 import matplotlib.pyplot as plt
 
+from ..reference import Reference, Observation
 from ..processing.binning import BinnedData
 from ..stats.statisticsdata import StatisticsData
 from ..config import Config
 
 
 
-rc_path = Path(__file__).parent / '../resource.yaml'
-with open(rc_path, "r") as f:
-        rc = yaml.safe_load(f) 
 
 
-def plot_purple(ctl_bins: BinnedData, ctl_stats: StatisticsData, exp_stats:StatisticsData, plot_var: str, cfg: Config):
+
+def plot_purple(ctl_bins: BinnedData, ctl_stats: StatisticsData, exp_stats:StatisticsData, plot_var: str, 
+                cfg: Config, obs: Observation, ref: Reference):
     fig, ax1 = plt.subplots(figsize=(7, 8))
 
     ctl = ctl_stats.mean_omb
@@ -83,14 +81,14 @@ def plot_purple(ctl_bins: BinnedData, ctl_stats: StatisticsData, exp_stats:Stati
         ax2.set_xlabel('RMS O-B Ratio (E/C)', color='blue', fontsize=11)
         ax2.tick_params(axis='x', labelcolor='blue')
         title2 = f"Comparison of mean and rms: O-B"
-        fig.text(0.5,0.91, title2, fontsize = 12, fontweight = "bold", color = "blue", ha = "center")
+        fig.text(0.5,0.87, title2, fontsize = 12, fontweight = "bold", color = "blue", ha = "center")
     elif plot_var == "std_omb":
         ax2.barh(channels, std_ratio-1,left = 1, height=0.4, color="purple",align = "center", edgecolor='none', alpha = 0.75)
     # Labels for Axis 2 (Top)
         ax2.set_xlabel('STD O-B Ratio (E/C)', color='purple', fontsize=11)
         ax2.tick_params(axis='x', labelcolor='purple')
         title2 = f"Comparison of mean and std: O-B"
-        fig.text(0.5,0.91, title2, fontsize = 12, fontweight = "bold", color = "purple", ha = "center")
+        fig.text(0.5,0.87, title2, fontsize = 12, fontweight = "bold", color = "purple", ha = "center")
         
 
 
@@ -99,16 +97,19 @@ def plot_purple(ctl_bins: BinnedData, ctl_stats: StatisticsData, exp_stats:Stati
         ax1.axhline(channel, color='gray', linestyle=':', linewidth=0.5, alpha=0.5)
 
     #Title
-    data_src = rc['KX_TO_DATASRC'].get(ctl_bins.data.kx)
-    data_type =  rc['KT_TO_DATATYPE'].get(ctl_bins.data.kt)
+    data_src = ref.get_instrument_title(obs.instrument)
+    data_type = ref.get_variable_title(obs.varname)
+
     ctl_name = cfg.experiments[0].id
     exp_name = cfg.experiments[1].id
     starttime = ctl_bins.ts_range[0]
     endtime = ctl_bins.ts_range[1]
     
+    line1 = f"{ctl_name} (ctl) vs. {exp_name} (exp)"
+    line2 = f"{starttime.strftime('%d%b%Y %HZ')} - {endtime.strftime('%d%b%Y %HZ')}"
+    line3 = f"{data_src} - {data_type}"
 
-
-    title = f"{ctl_name} (ctl) vs. {exp_name} (exp)\n{starttime.strftime('%d%b%Y %HZ')} - {endtime.strftime('%d%b%Y %HZ')}"
+    title = f"{line1}\n{line2}\n{line3}"
     plt.suptitle(title, fontsize=14, fontweight="bold",y = 0.98, ha="center")
     
     

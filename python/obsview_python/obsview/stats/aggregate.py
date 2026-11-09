@@ -134,17 +134,13 @@ def aggregate_pass_binned(ts: TimeSeriesData, start_time:datetime, end_time: dat
             nobs += np.bincount(ts.pass_data[ts.datetimes.index(datetime)].bin_indices, minlength=lev_count)
              
     avg_nobs = nobs/dt_count
-    bin_centers = ts.pass_data[0].bin_centers
     bin_labels = ts.pass_data[0].bin_labels
-    bin_heights = ts.pass_data[0].bin_heights
     is_ts = True
     ts_range = [start_time, end_time]
 
     obj = BinnedData(
         data = data,
-        bin_centers = bin_centers,
         bin_labels = bin_labels,
-        bin_heights = bin_heights,
         nobs = avg_nobs,
         is_ts = is_ts,
         ts_range = ts_range
@@ -179,15 +175,11 @@ def aggregate_fail_binned(ts: TimeSeriesData, start_time:datetime, end_time: dat
             nobs += np.bincount(ts.fail_data[ts.datetimes.index(datetime)].bin_indices, minlength=lev_count)
              
     avg_nobs = nobs/dt_count
-    bin_centers = ts.fail_data[0].bin_centers
     bin_labels = ts.fail_data[0].bin_labels
-    bin_heights = ts.fail_data[0].bin_heights
 
     obj = BinnedData(
         data = data,
-        bin_centers = bin_centers,
         bin_labels = bin_labels,
-        bin_heights = bin_heights,
         nobs = avg_nobs
     )
     return obj

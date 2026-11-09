@@ -7,6 +7,7 @@ from pathlib import Path
 from dataclasses import replace
 from typing import List, Optional, Tuple, Any
 
+from ..reference import Reference, Observation
 from ..loading.iodareader import IODAReader
 from ..processing.masking import fill_val_mask, qc_pass_mask, qc_fail_mask
 from ..processing.filtering import apply_filter
@@ -55,7 +56,9 @@ def _process_single_tar(
     varname: str,
     kx: int,
     starttime: Any,
-    endtime: Any
+    endtime: Any,
+    obs: Observation,
+    ref: Reference
 ) -> Optional[Tuple[Any, Any, Any, Any]]:
     # Create the reader inside the worker to avoid pickling issues
     reader = IODAReader()
@@ -68,7 +71,7 @@ def _process_single_tar(
 
         with tempfile.TemporaryDirectory() as tmp:
             nc_path = extract_member_path(tar, member, tmp)
-            data = reader.read(nc_path, varname, kx)
+            data = reader.read(nc_path, varname, kx, ref)
             data = replace(data, exp=exp_name)
 
             # Masking and filtering
@@ -86,9 +89,9 @@ def _process_single_tar(
             
 
             # Binning
-            pass_data_binned = create_bins(pass_data)
+            pass_data_binned = create_bins(pass_data, obs, ref)
             pass_data_binned = replace(pass_data_binned, ts_range=[starttime, endtime])
-            fail_data_binned = create_bins(fail_data)
+            fail_data_binned = create_bins(fail_data, obs, ref)
             pass_stats_binned = calculate_stats(pass_data_binned)
             
 

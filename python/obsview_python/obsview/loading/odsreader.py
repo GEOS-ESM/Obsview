@@ -1,20 +1,17 @@
 #Module containing ODSReader object 
 import os
 import re
-import yaml
 import numpy as np
+from pathlib import Path
 from netCDF4 import Dataset
 from dataclasses import replace
 from datetime import datetime, timezone
-from pathlib import Path
 
+from ..reference import Reference
 from .observationdata import ObservationData
 from ..processing.filtering import apply_filter
 
 
-rc_path = Path(__file__).parent / '../resource.yaml'
-with open(rc_path, "r") as f:
-        rc = yaml.safe_load(f) 
 
 class ODSReader:
 
@@ -86,8 +83,8 @@ class ODSReader:
         return obj
     
     #Create a mask to keep data with a unique kt and kx
-    def _kt_kx_mask(self, obj: ObservationData, varname: str, kx: int) -> np.ndarray:
-        kt = rc['VARNAME_TO_KT'].get(varname)
+    def _kt_kx_mask(self, obj: ObservationData, varname: str, kx: int, ref: Reference) -> np.ndarray:
+        kt = ref.get_kt_from_varname(varname)
         valid_mask = ((obj.kt == kt)
                       & (obj.kx == kx))
         return valid_mask
@@ -114,12 +111,12 @@ class ODSReader:
         ...
 
     #Main reading method to be used to load and process ODS files
-    def read(self, filename: str, varname: str, kx: int) -> ObservationData:
+    def read(self, filename: str, varname: str, kx: int, ref: Reference) -> ObservationData:
         nc = self._open_file(filename)
         raw = self._load_variables(nc)
         raw = self._calc_variables(raw)
         obj = self._flatten_data(raw, varname)
-        kt_mask = self._kt_kx_mask(obj, varname, kx)
+        kt_mask = self._kt_kx_mask(obj, varname, kx, ref)
         obj = self._filter_kt_and_kx(obj, kt_mask)
         dt = self._parse_datetime_from_filename(filename)
         single_kt = obj.kt[0]

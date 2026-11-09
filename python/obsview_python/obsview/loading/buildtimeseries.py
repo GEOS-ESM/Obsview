@@ -10,6 +10,7 @@ from functools import partial
 from datetime import datetime
 from concurrent.futures import ProcessPoolExecutor
 
+from ..reference import Reference, Observation
 from ..loading.timeseriesdata import TimeSeriesData
 from ..loading.iodareader import IODAReader
 from ..loading.odsreader import ODSReader
@@ -26,6 +27,7 @@ from ..stats.calc_stats import calculate_stats
 
 
 #Function to loop over IODA files and create a timeseries data object
+#This function has no use in the current code
 def build_ts_from_ioda(filenames: List[str], varname: str, kx: int) -> TimeSeriesData:
     reader = IODAReader()
     records = []        #List to append relevant contents of each file to
@@ -75,13 +77,13 @@ def build_ts_from_ioda(filenames: List[str], varname: str, kx: int) -> TimeSerie
     return obj
     ...
 
-def build_ts_from_ods(filenames, varname, kx, starttime: datetime, endtime: datetime) -> TimeSeriesData:
+def build_ts_from_ods(filenames, varname, kx, starttime: datetime, endtime: datetime, obs: Observation, ref: Reference) -> TimeSeriesData:
     reader = ODSReader()
     records = []        #List to append relevant contents of each file to
     
 
     for fname in filenames:
-        data = reader.read(fname, varname, kx)
+        data = reader.read(fname, varname, kx, ref)
         #masking
         val_mask = fill_val_mask(data)
     
@@ -98,9 +100,9 @@ def build_ts_from_ods(filenames, varname, kx, starttime: datetime, endtime: date
         pass_data = calc_derived(pass_data)                 #Only calculate variables for QC = 0 data
 
         #binning
-        pass_data_binned = create_bins(pass_data)
+        pass_data_binned = create_bins(pass_data, obs, ref)
         pass_data_binned = replace(pass_data_binned, ts_range = [starttime, endtime])
-        fail_data_binned = create_bins(fail_data)
+        fail_data_binned = create_bins(fail_data, obs, ref)
         #stats
         pass_stats_binned = calculate_stats(pass_data_binned)      #Only calculate stats on QC = 0 data
 
@@ -127,10 +129,11 @@ def build_ts_from_ods(filenames, varname, kx, starttime: datetime, endtime: date
     ...
 
 def build_ts_from_tar(tar_file_paths: str, instrument: str, varname: str,
-                      kx: int, starttime: datetime, endtime: datetime) -> TimeSeriesData:
+                      kx: int, starttime: datetime, endtime: datetime, obs: Observation, ref: Reference) -> TimeSeriesData:
 
     # Freeze constant parameters for pool mapping
-    worker_fn = partial(_process_single_tar,instrument=instrument,varname=varname,kx=kx,starttime=starttime,endtime=endtime)
+    worker_fn = partial(_process_single_tar,instrument=instrument,varname=varname,kx=kx,starttime=starttime,endtime=endtime,
+                        obs=obs, ref=ref)
 
     # Execute tasks across worker processes
     with ProcessPoolExecutor() as executor:

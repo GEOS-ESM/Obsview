@@ -32,10 +32,10 @@ data:
 # Experiment locations
 # ------------------------------------------------------------
 experiments:
-  # - id: j54rp1
-  #   file_type: "ioda"
-  #   base_path: /Users/ltrayano/Desktop/Obsview/Obsview/python/data/IODA files
-  #   label: "Control"          # shown in plot legends/titles
+  - id: j54rp1
+    file_type: "ioda"
+    base_path: /Users/ltrayano/Desktop/Obsview/Obsview/python/data/IODA files
+    label: "Control"          # shown in plot legends/titles
 
   - id: x0054
     file_type: "ods"
@@ -50,38 +50,25 @@ selection:
     start: "2026-01-01 06"
     end:   "2026-01-01 18"
     
-  #region: "global"
+  #region: "global, nh, sh, tr"
 
   targets:
     # - instrument: iasi_metop-b
-    #   kx: 876                       
-    #   obtype: radiance
     #   varname: brightnessTemperature   
-    #   kt: 40 
     #   level: 262
 
-    # - instrument: atms_n20
-    #   kx: 920                       
-    #   obtype: radiance
-    #   varname: brightnessTemperature   
-    #   kt: 40 
-    #   level: all
+    - instrument: atms_n20
+      varname: brightnessTemperature   
+      level: 13
 
-    - instrument: sondes
-      kx: 120
-      obtype: conventional
-      varname: airTemperature
-      kt: 44
-      level: 70.0   #all   
+    # - instrument: sondes
+    #   varname: specificHumidity
+    #   level: 300.0   #all   
+      #region: "global"
 
-    # - instrument: atms_n20
-    #   title_name: ""ATMS NOAA-20""
-    #     - varname: brightnessTemperature
-    #       kx: 920
-    #       kt: 40
-    #       level_type: channel
-    #       levels: 1-22 
-    #       title_name: "Brightness temperature"
+  
+
+  
 
 
  
@@ -92,7 +79,7 @@ selection:
 # ------------------------------------------------------------
 plots:
   statistics:   #(4 panel plot)
-    enabled: true
+    enabled: false
     time_averaged: true       # average over the whole time_range
 
   time_series:
@@ -109,8 +96,8 @@ plots:
     stat_type: "omb wo BC"
 
   comparison:
-    enabled: false
-    stat_type: "std_omb"    #rms or std
+    enabled: true
+    stat_type: "rms_omb"    #rms or std
     ratio_bounds: 0.15  #x axis range for comparison ratio (e.g. 0.15 = ±15%)
 
 
@@ -118,7 +105,7 @@ plots:
 # Output settings
 # ------------------------------------------------------------
 output:
-  mode: save                  # 'save', 'show', or 'both'
+  mode: show                  # 'save', 'show', or 'both'
   save_directory: /Users/ltrayano/Desktop/Obsview/Test Figures/output
   format: png                 # png | pdf | svg
   dpi: 300

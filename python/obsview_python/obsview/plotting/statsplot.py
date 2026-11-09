@@ -1,33 +1,30 @@
 #Module containing plotting functions to create the 4 pannel statistics plot
-import yaml
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 from datetime import datetime
-from pathlib import Path
 
+
+from ..reference import Reference, Observation
 from ..processing.binning import BinnedData
 from ..stats.statisticsdata import StatisticsData
 from ..stats.calc_stats import count_obs_per_bin
 
 
 
-rc_path = Path(__file__).parent / '../resource.yaml'
-with open(rc_path, "r") as f:
-        rc = yaml.safe_load(f) 
-
 #Adjust bar height (0-1 relative to level size)
 BAR_H = 0.8
 
-def plot_stats(pass_data: BinnedData, fail_data: BinnedData, stats: StatisticsData):
+def plot_stats(pass_data: BinnedData, fail_data: BinnedData, stats: StatisticsData, 
+               obs: Observation, ref: Reference):
     """
     4-panel statistics figure. Y-axis scaling/labels adapt to the vertical
     level type ('channel' or 'pressure') carried by the data.
     """
     lev_type = pass_data.data.lev_type
 
-    data_src = rc['KX_TO_DATASRC'].get(pass_data.data.kx)
-    data_type =  rc['KT_TO_DATATYPE'].get(pass_data.data.kt)
+    data_src = ref.get_instrument_title(obs.instrument)
+    data_type = ref.get_variable_title(obs.varname)
 
     #For plotting single time or time range
     if pass_data.is_ts:
@@ -84,8 +81,6 @@ def _panel_nobs(pass_data: BinnedData, fail_data: BinnedData, stats: StatisticsD
 
 def _panel_resstats(binned_data, stats, lev_type):
     n_bins = len(binned_data.bin_labels)
-    bin_centers = binned_data.bin_centers
-    bin_heights = binned_data.bin_heights
     bar_width = BAR_H*0.8
     offsets = [0.2, -0.2, 0.2, -0.2]
 
@@ -113,8 +108,6 @@ def _panel_resstats(binned_data, stats, lev_type):
 
 def _panel_jo(binned_data, stats, lev_type):
     n_bins = len(binned_data.bin_labels)
-    bin_centers = binned_data.bin_centers
-    bin_heights = binned_data.bin_heights
     bar_width = BAR_H*0.8
     offsets = [0.2, -0.2]
 
@@ -136,8 +129,6 @@ def _panel_jo(binned_data, stats, lev_type):
 
 def _panel_sigo(binned_data, stats, lev_type):
     n_bins = len(binned_data.bin_labels)
-    bin_centers = binned_data.bin_centers
-    bin_heights = binned_data.bin_heights
     bar_width = BAR_H*0.8
     offsets = [0.2, 0, -0.2]
 

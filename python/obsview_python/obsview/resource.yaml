@@ -1,7 +1,8 @@
 # Resource mapping file
 
-
-#For mapping variable names to respective kts
+#############################################
+# NAME MAPPING
+#############################################
 VARNAME_TO_KT:
   windEastward: 4
   windNorthward: 5
@@ -13,8 +14,24 @@ VARNAME_TO_KT:
   ozoneProfile: 87
   bendingAngle: 89
 
+
+##############################################
+# LEVELS MAPPING
+##############################################
+
+KX_KT_TO_LEVELS:
+  00,00: [5.0,7.0,10.0,20.0,30.0,50.0,70.0,100.0,150.0,200.0,250.0,300.0,400.0,500.0,700.0,850.0,925.0,1000.0]
+  120,11: [300.0,400.0,500.0,700.0,850.0,925.0,1000.0]
+  120,44: [5.0,7.0,10.0,20.0,30.0,50.0,70.0,100.0,150.0,200.0,250.0,300.0,400.0,500.0,700.0,850.0,925.0,1000.0]
+
+
+
+
+##############################################
 # FOR PLOT TITLES
-# Used for the data source part of plot titles
+##############################################
+
+
 KX_TO_DATASRC:
   120: "Radiosonde Temperature"
   220: "RADIOSONDE WIND"
@@ -26,5 +43,6 @@ KX_TO_DATASRC:
 KT_TO_DATATYPE:
   4: "Upper air zonal wind"
   5: "Upper air meridional wind"
+  11: "Specific humidity"
   40: "Brightness temperature"
   44: "Upper air temperature"

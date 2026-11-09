@@ -43,7 +43,11 @@ def _ods_candidate_file(base_path: str, expid: str, instrument: str,
     time_token = dt.strftime(file_time_format)
 
     #Convert IODA instruments to conv
-    if instrument in ("sondes", "satwind", "scatwind", "aircraft_temperature", "aircraft_wind"):
+    #TODO: Make this a part of reference file
+    ioda_name_to_conv = ("sondes", "satwind", "scatwind", "aircraft_temperature", 
+                      "aircraft_wind", "piball", "sfcship", "gps")
+
+    if instrument in ioda_name_to_conv:        
         instrument = "conv"
 
     pattern = file_pattern.format(expid=expid, instrument=instrument, file_time_format = time_token)

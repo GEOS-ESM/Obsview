@@ -23,6 +23,7 @@ from dataclasses import replace
 import matplotlib.pyplot as plt
 
 from .config import Config, Experiment, Target
+from .reference import Reference, Observation
 
 # Time series construction + plotting (existing modules).
 from .utils import _parse_time, _dt_to_int
@@ -43,7 +44,7 @@ log = logging.getLogger("obsview")
 # Entry point
 # ============================================================
 
-def run(cfg: Config) -> None:
+def run(cfg: Config, ref: Reference) -> None:
     #_configure_logging(cfg)
 
     #log.info("Starting run: file_type=%s, %d experiment(s), %d target(s)",
@@ -54,17 +55,14 @@ def run(cfg: Config) -> None:
 
     # Outer loop: each instrument/obtype the user asked to analyze.
     for target in cfg.selection.targets:
-        
-        #log.info("Target: instrument=%s obtype=%s varname=%s (%s levels)",
-                 #target.instrument, target.obtype, varname, lev_type)
 
         # Load each experiment's time series for this target.
-        ts_by_exp: Dict[str, TimeSeriesData] = _load_all_experiments(cfg, target, start, end)
+        ts_by_exp: Dict[str, TimeSeriesData] = _load_all_experiments(cfg, ref, target, start, end)
         ag_by_exp = _aggregate_experiments(cfg,ts_by_exp, start, end)
 
 
         # Dispatch to enabled plots
-        _make_enabled_plots(cfg, target, ts_by_exp, ag_by_exp, start, end)
+        _make_enabled_plots(cfg, target, ts_by_exp, ag_by_exp, start, end, ref)
         plt.show()
 
     #log.info("Run complete.")
@@ -87,72 +85,50 @@ def run(cfg: Config) -> None:
 #     )
 
 
-# ============================================================
-# File location: templates + time range -> concrete directories
-# ============================================================
-
-def _resolve_tar_dir(cfg: Config, exp: Experiment, dt: datetime) -> str:
-    """
-    Fill the directory template from config with experiment + time values.
-
-    Template example (from YAML):
-      "{base}/{expid}/jedi/obs/Y{year}/M{month}"
-    """
-    template = cfg.data["ioda"]["tar_dir_template"]  # see note below
-    tar_dir = template.format(
-        base=exp.base_path,
-        expid=exp.id,
-        year=f"{dt.year:04d}",
-        month=f"{dt.month:02d}",
-    )
-    if not os.path.isdir(tar_dir):
-        raise FileNotFoundError(f"Resolved tar dir does not exist: {tar_dir!r}")
-    return tar_dir
-
-
-
 
 # ============================================================
 # Experiment loading (with optional parallelism)
 # ============================================================
 
-def _load_all_experiments(cfg: Config, target: Target, start: datetime, end: datetime) -> Dict[str, TimeSeriesData]:
+def _load_all_experiments(cfg: Config, ref: Reference, target: Target, start: datetime, end: datetime) -> Dict[str, TimeSeriesData]:
     """
     Build a TimeSeriesData per experiment for this target.
     """
-    instrument = target.instrument
-    varname = target.varname
-    kx = target.kx
+    #Map config target to reference observation
+    obs = ref.get_observation(target.instrument, target.varname)
+
+    instrument = obs.instrument
+    varname = obs.varname
+    kx = obs.kx
         
     ts_by_exp = {}
+
     for exp in cfg.experiments:
-    #     log.info("Loading experiment %s (%s)", exp.id, exp.label)
         base_path = exp.base_path
         expid = exp.id
         file_type = exp.file_type
         if file_type == "ods":
-            print(f"Loading ODS files for {instrument}...")
+            print(f"Loading ODS files for {exp.id}: {instrument}...")
             dir_template = cfg.data.ods.dir_template
             file_pattern = cfg.data.ods.file_pattern
             file_time_format = cfg.data.ods.file_time_format
             ods_files = discover_ods_files(base_path,expid,instrument,dir_template,
                                            file_pattern,file_time_format,start,end)
-            ts = build_ts_from_ods(ods_files,varname,kx,start,end)
+            ts = build_ts_from_ods(ods_files,varname,kx,start,end,obs,ref)
             ts_by_exp[exp.id] = ts
             print("ODS files loaded")
         elif file_type == "ioda":
-            print(f"Loading IODA files for {instrument}...")
+            print(f"Loading IODA files for {exp.id}: {instrument}...")
             dir_template = cfg.data.ioda.dir_template
             file_pattern = cfg.data.ioda.file_pattern
             file_time_format = cfg.data.ioda.file_time_format
             ioda_files = discover_ioda_files(base_path,expid,instrument,dir_template,
                                            file_pattern,file_time_format,start,end)
-            ts = build_ts_from_tar(ioda_files,instrument,varname,kx,start,end)
+            ts = build_ts_from_tar(ioda_files,instrument,varname,kx,start,end,obs,ref)
             ts.pass_data[0].data
             ts_by_exp[exp.id] = ts
             print("IODA files loaded")
-        
-    #     log.info("  loaded %d synoptic times for %s", len(ts.datetimes), exp.id)
+
     return ts_by_exp
 
 
@@ -178,23 +154,23 @@ def _aggregate_experiments(cfg, ts_by_exp: Dict[str, TimeSeriesData],
 
 def _make_enabled_plots(cfg: Config, target: Target,
                         ts_by_exp: Dict[str, TimeSeriesData],ag_by_exp,
-                        start: datetime, end: datetime) -> None:
+                        start: datetime, end: datetime, ref: Reference) -> None:
     plots = cfg.plots
 
     
 
     if plots.statistics.enabled:
-        _dispatch_statistics(cfg, target, ag_by_exp, start, end)
+        _dispatch_statistics(cfg, target, ag_by_exp, start, end, ref)
 
 
     if plots.coverage_map.enabled:
-        _dispatch_coverage(cfg,target,ts_by_exp, start, end)
+        _dispatch_coverage(cfg,target,ts_by_exp, start, end, ref)
 
     if plots.comparison.enabled:
-        _dispatch_comparison(cfg, ag_by_exp)
+        _dispatch_comparison(cfg, ag_by_exp, target, ref)
 
     if plots.time_series.enabled:
-        _dispatch_time_series(cfg,target,ts_by_exp, start, end)
+        _dispatch_time_series(cfg,target,ts_by_exp, start, end, ref)
 
 
         ...
@@ -203,7 +179,8 @@ def _make_enabled_plots(cfg: Config, target: Target,
 
 
 
-def _dispatch_statistics(cfg: Config, target, ag_by_exp, start: datetime, end: datetime) -> None:
+def _dispatch_statistics(cfg: Config, target: Target, ag_by_exp, start: datetime, end: datetime, ref: Reference) -> None:
+    #TODO: Loop through experiments instead of picking the first one
     iter_values = iter(ag_by_exp.values())
     ctl_values = next(iter_values)
     stats = ctl_values[0]
@@ -214,50 +191,58 @@ def _dispatch_statistics(cfg: Config, target, ag_by_exp, start: datetime, end: d
     start = _dt_to_int(start)
     end = _dt_to_int(end)
 
-    fig = plot_stats(pass_data, fail_data, stats)
+    obs = ref.get_observation(target.instrument, target.varname)
+
+    fig = plot_stats(pass_data, fail_data, stats, obs, ref)
     _finalize(cfg,fig,"stats",target,exp, start, end)
     ...
 
 
-def _dispatch_time_series(cfg, target, ts_by_exp, start: datetime, end: datetime) -> None:
+def _dispatch_time_series(cfg, target, ts_by_exp, start: datetime, end: datetime, ref: Reference) -> None:
     level = target.level
     start = _dt_to_int(start)
     end = _dt_to_int(end)
+
+    obs = ref.get_observation(target.instrument, target.varname)
 
     for exp in ts_by_exp:
         ts = ts_by_exp[exp]
         if level == "all":
             for lev in ts.pass_data[0].bin_labels:
                 level_num = np.where(ts.pass_data[0].bin_labels == lev)[0][0]+1
-                fig = plot_series(ts, channel=lev, start=None, end=None)
+                fig = plot_series(ts, obs, ref, channel=lev, start=None, end=None)
                 _finalize_lev(cfg, fig, "timeseries", target, exp, start, end, level_num)
         else:
             level_num = np.where(ts.pass_data[0].bin_labels == level)[0][0]+1
-            fig = plot_series(ts, channel=level, start=None, end=None)
+            fig = plot_series(ts, obs, ref, channel=level, start=None, end=None)
             _finalize_lev(cfg, fig, "timeseries", target, exp, start, end, level_num)
 
 
     ...
 
-def _dispatch_coverage(cfg: Config,target:Target, ts_by_exp, start, end) -> None:
+def _dispatch_coverage(cfg: Config,target:Target, ts_by_exp, start, end, ref: Reference) -> None:
     level = target.level
     start = _dt_to_int(start)
     end = _dt_to_int(end)
+
+    obs = ref.get_observation(target.instrument, target.varname)
+
+
     for exp in ts_by_exp:
         pass_data = ts_by_exp[exp].pass_data[0]
         fail_data = ts_by_exp[exp].fail_data[0]
         if level == "all":
             for lev in pass_data.bin_labels:
                 level_num = np.where(pass_data.bin_labels == lev)[0][0]+1
-                fig = plot_coverage(pass_data, fail_data, map_level=lev)
+                fig = plot_coverage(pass_data, fail_data, obs, ref, map_level=lev)
                 _finalize_lev(cfg, fig, "coverage", target, exp, start, end, level_num)
         else: 
-            level_num = np.where(pass_data.bin_labels == lev)[0][0]+1
-            fig = plot_coverage(pass_data, fail_data, map_level=level)
+            level_num = np.where(pass_data.bin_labels == level)[0][0]+1
+            fig = plot_coverage(pass_data, fail_data, obs, ref, map_level=level)
             _finalize_lev(cfg, fig, "coverage", target, exp, start, end, level_num)
 
 
-def _dispatch_comparison(cfg: Config, ag_by_exp) -> None:
+def _dispatch_comparison(cfg: Config, ag_by_exp, target: Target, ref: Reference) -> None:
     stats_type = cfg.plots.comparison.stat_type
     iter_values = iter(ag_by_exp.values())
     ctl_values = next(iter_values)
@@ -265,7 +250,9 @@ def _dispatch_comparison(cfg: Config, ag_by_exp) -> None:
     ctl_bins = ctl_values[1]
     exp_stats = next(iter_values)[0]
 
-    fig = plot_purple(ctl_bins,ctl_stats,exp_stats, stats_type, cfg)
+    obs = ref.get_observation(target.instrument, target.varname)
+
+    fig = plot_purple(ctl_bins,ctl_stats,exp_stats, stats_type, cfg, obs, ref)
 
 
 # ============================================================

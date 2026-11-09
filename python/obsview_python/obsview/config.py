@@ -48,10 +48,7 @@ class TimeRange:
 @dataclass
 class Target:
     instrument: str
-    kx: int
-    obtype: str
     varname: str
-    kt: int
     level: int
     
     
