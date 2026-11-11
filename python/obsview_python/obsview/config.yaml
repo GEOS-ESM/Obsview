@@ -32,10 +32,10 @@ data:
 # Experiment locations
 # ------------------------------------------------------------
 experiments:
-  - id: j54rp1
-    file_type: "ioda"
-    base_path: /Users/ltrayano/Desktop/Obsview/Obsview/python/data/IODA files
-    label: "Control"          # shown in plot legends/titles
+  # - id: j54rp1
+  #   file_type: "ioda"
+  #   base_path: /Users/ltrayano/Desktop/Obsview/Obsview/python/data/IODA files
+  #   label: "Control"          # shown in plot legends/titles
 
   - id: x0054
     file_type: "ods"
@@ -57,13 +57,13 @@ selection:
     #   varname: brightnessTemperature   
     #   level: 262
 
-    - instrument: atms_n20
-      varname: brightnessTemperature   
-      level: 13
+    # - instrument: atms_n20
+    #   varname: brightnessTemperature   
+    #   level: 13
 
-    # - instrument: sondes
-    #   varname: specificHumidity
-    #   level: 300.0   #all   
+    - instrument: sondes
+      varname: windVector
+      level: 300.0   #all   
       #region: "global"
 
   
@@ -79,7 +79,7 @@ selection:
 # ------------------------------------------------------------
 plots:
   statistics:   #(4 panel plot)
-    enabled: false
+    enabled: true
     time_averaged: true       # average over the whole time_range
 
   time_series:
@@ -96,7 +96,7 @@ plots:
     stat_type: "omb wo BC"
 
   comparison:
-    enabled: true
+    enabled: false
     stat_type: "rms_omb"    #rms or std
     ratio_bounds: 0.15  #x axis range for comparison ratio (e.g. 0.15 = ±15%)
 

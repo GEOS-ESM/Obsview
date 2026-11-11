@@ -16,6 +16,7 @@ from ..loading.iodareader import IODAReader
 from ..loading.odsreader import ODSReader
 from ..utils import _parse_time
 from ..loading.tarreader import find_instrument_member, extract_member_path, _process_single_tar
+from ..processing.windvector import combine_uv_components
 from ..processing.masking import fill_val_mask, qc_pass_mask, qc_fail_mask
 from ..processing.filtering import apply_filter
 from ..processing.derived import calc_derived
@@ -83,7 +84,15 @@ def build_ts_from_ods(filenames, varname, kx, starttime: datetime, endtime: date
     
 
     for fname in filenames:
-        data = reader.read(fname, varname, kx, ref)
+
+        if varname != "windVector": 
+            data = reader.read(fname, varname, kx, ref)
+        else:                                               #Load 2 files for special case
+            wind_varnames = ("windEastward", "windNorthward")
+            u,v = (reader.read(fname, wind_varname, kx, ref) for wind_varname in wind_varnames)
+            data = combine_uv_components(u,v)
+            ...
+
         #masking
         val_mask = fill_val_mask(data)
     

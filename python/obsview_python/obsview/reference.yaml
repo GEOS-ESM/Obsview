@@ -98,6 +98,7 @@ variables:
   specificHumidity: {kt: 11, title: "Specific Humidity"}
   windEastward: {kt: 4, title: "Eastward Wind"}
   windNorthward: {kt: 5, title: "Northward Wind"}
+  windVector: {kt: (4,5), title: "Wind Vector"}
   
   # GPS RO variables
   bendingAngle: {kt: 89, title: "Bending Angle"}
@@ -123,6 +124,7 @@ observations:
   - {instrument: sondes, varname: specificHumidity, kx: 120, level_type: pressure, levels: lower_trop}
   - {instrument: sondes, varname: windEastward, kx: 220, level_type: pressure, levels: upper_trop}
   - {instrument: sondes, varname: windNorthward, kx: 220, level_type: pressure, levels: upper_trop}
+  - {instrument: sondes, varname: windVector, kx: 220, level_type: pressure, levels: upper_trop}
   
   # Pilot balloon
   - {instrument: pibal, varname: windEastward, kx: 221, level_type: pressure, levels: upper_trop}
