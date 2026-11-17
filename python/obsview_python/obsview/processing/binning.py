@@ -26,9 +26,9 @@ class BinnedData:
 
 
 def create_bins(data: ObservationData, obs: Observation, ref: Reference) -> BinnedData:
-    if data.lev_type == "channel":
+    if obs.level_type == "channel":
         return create_channel_bins(data)
-    elif data.lev_type == "pressure":
+    elif obs.level_type == "pressure":
         #Get pressure level set    
         bins = np.array(ref.get_pressure_levels(obs))
         return create_pressure_bins(data, bins)

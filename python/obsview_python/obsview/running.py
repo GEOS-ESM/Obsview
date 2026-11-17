@@ -180,22 +180,18 @@ def _make_enabled_plots(cfg: Config, target: Target,
 
 
 def _dispatch_statistics(cfg: Config, target: Target, ag_by_exp, start: datetime, end: datetime, ref: Reference) -> None:
-    #TODO: Loop through experiments instead of picking the first one
-    iter_values = iter(ag_by_exp.values())
-    ctl_values = next(iter_values)
-    stats = ctl_values[0]
-    pass_data = ctl_values[1]
-    fail_data = ctl_values[2]
-
-    exp = next(iter(ag_by_exp))
     start = _dt_to_int(start)
     end = _dt_to_int(end)
-
     obs = ref.get_observation(target.instrument, target.varname)
 
-    fig = plot_stats(pass_data, fail_data, stats, obs, ref)
-    _finalize(cfg,fig,"stats",target,exp, start, end)
-    ...
+    for exp in ag_by_exp:
+        stats = ag_by_exp[exp][0]
+        pass_data = ag_by_exp[exp][1]
+        fail_data = ag_by_exp[exp][2]
+        fig = plot_stats(pass_data, fail_data, stats, obs, ref)
+        _finalize(cfg,fig,"stats",target,exp, start, end)
+        
+    
 
 
 def _dispatch_time_series(cfg, target, ts_by_exp, start: datetime, end: datetime, ref: Reference) -> None:

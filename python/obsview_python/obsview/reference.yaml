@@ -117,18 +117,20 @@ observations:
   - {instrument: aircraft_temperature, varname: airTemperature, kx: 131, level_type: pressure, levels: upper_trop}
   - {instrument: aircraft_wind, varname: windEastward, kx: 210, level_type: pressure, levels: upper_trop}
   - {instrument: aircraft_wind, varname: windNorthward, kx: 210, level_type: pressure, levels: upper_trop}
+  - {instrument: aircraft_wind, varname: windVector, kx: 210, level_type: pressure, levels: upper_trop}
   
   # Radiosonde observations
   - {instrument: sondes, varname: airTemperature, kx: 120, level_type: pressure, levels: default_pressure}
   - {instrument: sondes, varname: virtualTemperature, kx: 120, level_type: pressure, levels: default_pressure}
   - {instrument: sondes, varname: specificHumidity, kx: 120, level_type: pressure, levels: lower_trop}
-  - {instrument: sondes, varname: windEastward, kx: 220, level_type: pressure, levels: upper_trop}
-  - {instrument: sondes, varname: windNorthward, kx: 220, level_type: pressure, levels: upper_trop}
-  - {instrument: sondes, varname: windVector, kx: 220, level_type: pressure, levels: upper_trop}
+  - {instrument: sondes, varname: windEastward, kx: 220, level_type: pressure, levels: default_pressure}
+  - {instrument: sondes, varname: windNorthward, kx: 220, level_type: pressure, levels: default_pressure}
+  - {instrument: sondes, varname: windVector, kx: 220, level_type: pressure, levels: default_pressure}
   
   # Pilot balloon
-  - {instrument: pibal, varname: windEastward, kx: 221, level_type: pressure, levels: upper_trop}
-  - {instrument: pibal, varname: windNorthward, kx: 221, level_type: pressure, levels: upper_trop}
+  - {instrument: pibal, varname: windEastward, kx: 221, level_type: pressure, levels: default_pressure}
+  - {instrument: pibal, varname: windNorthward, kx: 221, level_type: pressure, levels: default_pressure}
+  - {instrument: pibal, varname: windVector, kx: 221, level_type: pressure, levels: default_pressure}
   
   # Surface observations
   - {instrument: sfc, varname: airTemperature, kx: 180, level_type: surface, levels: null}
@@ -139,8 +141,10 @@ observations:
   # Satellite winds
   - {instrument: satwind, varname: windEastward, kx: 240, level_type: pressure, levels: upper_trop}
   - {instrument: satwind, varname: windNorthward, kx: 240, level_type: pressure, levels: upper_trop}
+  - {instrument: satwind, varname: windVector, kx: 240, level_type: pressure, levels: upper_trop}
   - {instrument: scatwind, varname: windEastward, kx: 280, level_type: surface, levels: null}
   - {instrument: scatwind, varname: windNorthward, kx: 280, level_type: surface, levels: null}
+  - {instrument: scatwind, varname: windVector, kx: 280, level_type: surface, levels: null}
   
   # GPS RO
   - {instrument: gps, varname: bendingAngle, kx: 3, level_type: pressure, levels: extended_pressure}

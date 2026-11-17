@@ -9,6 +9,7 @@ from typing import List, Optional, Tuple, Any
 
 from ..reference import Reference, Observation
 from ..loading.iodareader import IODAReader
+from ..processing.windvector import combine_uv_components
 from ..processing.masking import fill_val_mask, qc_pass_mask, qc_fail_mask
 from ..processing.filtering import apply_filter
 from ..processing.derived import calc_derived
@@ -71,8 +72,18 @@ def _process_single_tar(
 
         with tempfile.TemporaryDirectory() as tmp:
             nc_path = extract_member_path(tar, member, tmp)
-            data = reader.read(nc_path, varname, kx, ref)
-            data = replace(data, exp=exp_name)
+            
+            if varname != "windVector": 
+                data = reader.read(nc_path, varname, kx, ref)
+                data = replace(data, exp=exp_name)
+            else:                                               #Load 2 files for special case
+                wind_varnames = ("windEastward", "windNorthward")
+                u,v = (reader.read(nc_path, wind_varname, kx, ref) for wind_varname in wind_varnames)
+                u = apply_filter(u, fill_val_mask(u))      
+                v = apply_filter(v, fill_val_mask(v))
+                data = combine_uv_components(u,v)
+                ...
+            
 
             # Masking and filtering
             val_mask = fill_val_mask(data)

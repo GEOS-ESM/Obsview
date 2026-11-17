@@ -154,11 +154,19 @@ def _panel_sigo(binned_data, stats, lev_type):
 
 
 def _apply_level_axis(ax, pass_data: BinnedData, lev_type: str, title_base: str):
-    y_ax = np.arange(len(pass_data.bin_labels))
-    labels = np.int32(pass_data.bin_labels)
+    #Limit y axis ticks to no more than 22 labels
+    if len(pass_data.bin_labels) <= 22:
+        y_ax = np.arange(len(pass_data.bin_labels))
+        labels = np.int16(pass_data.bin_labels)
+    else: 
+        num_bins = len(pass_data.bin_labels)
+        step = num_bins/20
+        y_ax = np.arange(step,num_bins+step,step)
+        labels = np.int16(np.arange(step,num_bins+step,step))
+        ...
     ax.set_yticks(y_ax)
     ax.set_yticklabels(labels)
-    ax.set_ylim(-0.5, len(y_ax) - 0.5)
+    ax.set_ylim(-0.5, len(pass_data.bin_labels) - 0.5)
     if lev_type == "pressure":
         ax.invert_yaxis()                 
         ax.set_ylabel("Pressure (hPa)")

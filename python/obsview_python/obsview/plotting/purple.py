@@ -21,22 +21,11 @@ def plot_purple(ctl_bins: BinnedData, ctl_stats: StatisticsData, exp_stats:Stati
     exp = exp_stats.mean_omb
     diff = (np.abs(exp) - np.abs(ctl))
     channels = ctl_bins.bin_labels
+    y_pos = np.arange(1, len(ctl_bins.bin_labels)+1)
 
 
     rms_ratio = (exp_stats.rms_omb/ctl_stats.rms_omb)
     std_ratio = (exp_stats.std_omb/ctl_stats.std_omb)
-    # Mock Confidence Intervals
-    lower_ci = rms_ratio - 0.02
-    upper_ci = rms_ratio + 0.03
-
-    # Calculate error lengths (distances from the center dot)
-    lower_error = rms_ratio - lower_ci
-    upper_error = upper_ci - rms_ratio
-    error_spans = np.array([lower_error, upper_error])
-
-
-    bar_colors = ['green' if val < 0 else 'red' for val in diff]
-    ratio_bar_colors = ['green' if val < 1 else 'red' for val in rms_ratio]
     max_val = np.nanmax(np.abs(diff))
 
 # 2. Add an optional padding margin (e.g., 10% extra space) so bars don't touch the edges
@@ -47,9 +36,9 @@ def plot_purple(ctl_bins: BinnedData, ctl_stats: StatisticsData, exp_stats:Stati
     ax1.set_xlim(-x_limit, x_limit)
 
     #Plot difference ratio
-    ax1.barh(channels, diff, height=0.6, color="green", edgecolor='none', align='center', alpha = 0.5)
+    ax1.barh(y_pos, diff, height=0.6, color="green", edgecolor='none', align='center', alpha = 0.5)
     
-    ax1.set_ylim(0, np.max(channels)+1)
+    ax1.set_ylim(0, len(ctl_bins.bin_labels)+1)
     ax1.axvline(0, color='purple', linestyle='-', linewidth=1, alpha=0.7) # Reference line at zero
 
 
@@ -57,7 +46,15 @@ def plot_purple(ctl_bins: BinnedData, ctl_stats: StatisticsData, exp_stats:Stati
     ax1.set_xlabel(f'Mean O-B difference (E - C)\n<- Improvement | Deterioration ->', fontsize=11)
 
     
-    ax1.set_yticks(np.arange(2, 24, 2))
+    
+    labels = np.int16(ctl_bins.bin_labels)
+    ax1.set_yticks(np.arange(1, len(ctl_bins.bin_labels)+1))
+    ax1.set_yticklabels(labels)
+
+    if obs.level_type == "pressure":
+        ax1.invert_yaxis()
+        ax1.set_ylabel('Pressure level (hPa)', fontsize=12)
+
     
 
     #Styling
@@ -76,14 +73,14 @@ def plot_purple(ctl_bins: BinnedData, ctl_stats: StatisticsData, exp_stats:Stati
 
     if plot_var == "rms_omb":
 
-        ax2.barh(channels, rms_ratio-1,left = 1, height=0.4, color="blue",align = "center", edgecolor='none', alpha = 0.75)
+        ax2.barh(y_pos, rms_ratio-1,left = 1, height=0.4, color="blue",align = "center", edgecolor='none', alpha = 0.75)
     # Labels for Axis 2 (Top)
         ax2.set_xlabel('RMS O-B Ratio (E/C)', color='blue', fontsize=11)
         ax2.tick_params(axis='x', labelcolor='blue')
         title2 = f"Comparison of mean and rms: O-B"
         fig.text(0.5,0.87, title2, fontsize = 12, fontweight = "bold", color = "blue", ha = "center")
     elif plot_var == "std_omb":
-        ax2.barh(channels, std_ratio-1,left = 1, height=0.4, color="purple",align = "center", edgecolor='none', alpha = 0.75)
+        ax2.barh(y_pos, std_ratio-1,left = 1, height=0.4, color="purple",align = "center", edgecolor='none', alpha = 0.75)
     # Labels for Axis 2 (Top)
         ax2.set_xlabel('STD O-B Ratio (E/C)', color='purple', fontsize=11)
         ax2.tick_params(axis='x', labelcolor='purple')
@@ -93,8 +90,8 @@ def plot_purple(ctl_bins: BinnedData, ctl_stats: StatisticsData, exp_stats:Stati
 
 
     #Horizontal marks:
-    for channel in channels:
-        ax1.axhline(channel, color='gray', linestyle=':', linewidth=0.5, alpha=0.5)
+    for pos in y_pos:
+        ax1.axhline(pos, color='gray', linestyle=':', linewidth=0.5, alpha=0.5)
 
     #Title
     data_src = ref.get_instrument_title(obs.instrument)

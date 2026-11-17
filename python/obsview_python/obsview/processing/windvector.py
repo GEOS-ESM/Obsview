@@ -2,11 +2,15 @@
 import numpy as np
 from dataclasses import replace
 from.filtering import apply_filter
-from .masking import uv_match_masks
+from .masking import uv_match_masks, fill_val_mask
 from ..loading.observationdata import ObservationData
 
 
 def combine_uv_components(u: ObservationData, v: ObservationData) -> ObservationData:
+    #Fill value masking:
+    # fv_u, fv_v = fill_val_mask(u), fill_val_mask(v)
+    # u,v = apply_filter(u,fv_u), apply_filter(v,fv_v)
+
     #New arrays with matching observations:
     iu, iv = uv_match_masks(u,v)
     u,v = apply_filter(u,iu), apply_filter(v,iv)
@@ -22,8 +26,13 @@ def combine_uv_components(u: ObservationData, v: ObservationData) -> Observation
     omb = mag_obs - np.hypot(ub, vb)
     oma = mag_obs - np.hypot(ua, va)
 
-    amb = np.hypot(u.amb, v.amb)                         # |analysis - background|
-    sigo = np.sqrt(0.5 * (u.sigo**2 + v.sigo**2))        # == sigo when U,V share it
+    # omb = np.hypot(u.omb, v.omb)
+    # oma = np.hypot(u.oma, v.oma)
+
+
+    amb = np.hypot(ua, va)  - np.hypot(ub, vb)                        # |analysis - background|
+    #sigo = np.sqrt(0.5 * (u.sigo**2 + v.sigo**2))        # == sigo when U,V share it
+    sigo = np.hypot(u.sigo, v.sigo) 
 
     # Vector passes QC only if BOTH components pass; otherwise carry the failure.
     both_pass = (u.qc == 0) & (v.qc == 0)
