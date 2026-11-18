@@ -33,7 +33,7 @@ def plot_purple(ctl_bins: BinnedData, ctl_stats: StatisticsData, exp_stats:Stati
     x_limit = max_val * padding
 
 # 3. Apply symmetric limits to keep zero dead-center
-    ax1.set_xlim(-x_limit, x_limit)
+    ax1.set_xlim(-0.2, 0.2)
 
     #Plot difference ratio
     ax1.barh(y_pos, diff, height=0.6, color="green", edgecolor='none', align='center', alpha = 0.5)
@@ -66,7 +66,7 @@ def plot_purple(ctl_bins: BinnedData, ctl_stats: StatisticsData, exp_stats:Stati
     # 3. Create Twin Axis for RMS (Top X-axis)
     ax2 = ax1.twiny()  
 
-    span = 0.30
+    span = 0.04
     ax2.set_xlim(1-span, span+1)  # Scales from 0 to slightly above max RMS
     #ax2.errorbar(rms_ratio, channels, xerr=error_spans, fmt='none', ecolor='blue',elinewidth=1.2,capsize=5, alpha=0.6)
     #ax2.plot(rms_ratio, channels, color='blue', linestyle='', marker='o', linewidth=1.5, label='RMS Diff')
