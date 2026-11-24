@@ -23,15 +23,8 @@ def plot_radmon(pass_data: BinnedData, channel: int = DEFAULT_CHANNEL):     #TOD
     ax.coastlines(resolution='110m', color='black', linewidth=1)
     ax.set_global()
 
-    sc = ax.scatter(
-    lons, lats, 
-    c=values, 
-    cmap='coolwarm', 
-    vmin=-10.0, 
-    vmax=10.0, 
-    s=3.5,                 # Small marker size to preserve swath visibility
-    transform=ccrs.PlateCarree()
-    )
+    sc = ax.scatter(lons, lats, c=values, cmap='coolwarm', vmin=-10.0, 
+    vmax=10.0, s=3.5,transform=ccrs.PlateCarree())
 
     data_src = data_src = KX_TO_DATASRC.get(pass_data.data.kx)
     data_type =  KT_TO_DATATYPE.get(pass_data.data.kt)

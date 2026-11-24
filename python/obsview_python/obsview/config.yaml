@@ -50,20 +50,20 @@ selection:
     start: "2026-01-01 06"
     end:   "2026-01-01 18"
     
-  #region: "global, nh, sh, tr"
+  domain: [global, nh]
 
   targets:
     # - instrument: iasi_metop-b
     #   varname: brightnessTemperature   
     #   level: 262
 
-    # - instrument: atms_n20
-    #   varname: brightnessTemperature   
-    #   level: 13
+    - instrument: atms_n20
+      varname: brightnessTemperature   
+      level: 13
 
-    - instrument: sondes
-      varname: windVector
-      level: 300.0   
+    # - instrument: sondes
+    #   varname: windVector
+    #   level: 300.0   
 
     # - instrument: sondes
     #   varname: windVector
@@ -105,8 +105,10 @@ plots:
 
   comparison:
     enabled: true
-    stat_type: "rms_omb"    #rms or std
-    ratio_bounds: 0.15  #x axis range for comparison ratio (e.g. 0.15 = ±15%)
+    stat_type: "std"    #rms or std
+    variable: "obs"     #omb, oma, or obs
+    diff_bounds: 0.2    #x axis range for difference 
+    ratio_bounds: 0.04  #x axis range for ratio (e.g. 0.15 = ±15%)
 
 
 # ------------------------------------------------------------

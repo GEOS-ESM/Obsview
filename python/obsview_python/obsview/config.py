@@ -57,8 +57,8 @@ class Target:
 @dataclass
 class Selection:
     time_range: TimeRange
+    domain: List[str]
     targets: List[Target]
-    domain: str
 
 # ------------------------------------------------------------
 # Plot settings
@@ -71,9 +71,12 @@ class StatisticsSettings:
 
 @dataclass
 class ComparisonSettings:
+    enabled: bool
     stat_type: str
+    variable: str
+    diff_bounds: float
     ratio_bounds: float
-    enabled: bool = True
+    
 
 @dataclass
 class CoverageMapSettings:
@@ -85,6 +88,11 @@ class TimeSeriesSettings:
     enabled: bool
     date_tick_interval_days: int
 
+@dataclass
+class MonitoringMapSettings:
+    enabled: bool
+    projection: str
+    stat_type: str
 
 @dataclass
 class PlotSettings:
@@ -92,6 +100,7 @@ class PlotSettings:
     comparison: ComparisonSettings
     coverage_map: CoverageMapSettings
     time_series: TimeSeriesSettings
+    monitoring_map: MonitoringMapSettings
 
 # ------------------------------------------------------------
 # Output settings
@@ -149,14 +158,15 @@ def load_config(path: str) -> Config:
     selection = Selection(
         time_range=TimeRange(**sel_raw["time_range"]),
         targets=[Target(**t) for t in sel_raw["targets"]],
-        domain=sel_raw.get("domain"),     # optional
+        domain=sel_raw.get("domain"),     
     )
     #plots
     plots = PlotSettings(
         statistics= StatisticsSettings(**raw["plots"]["statistics"]),
         comparison = ComparisonSettings(**raw["plots"]["comparison"]),
         coverage_map = CoverageMapSettings(**raw["plots"]["coverage_map"]),
-        time_series = TimeSeriesSettings(**raw["plots"]["time_series"])
+        time_series = TimeSeriesSettings(**raw["plots"]["time_series"]),
+        monitoring_map = MonitoringMapSettings(**raw["plots"]["monitoring_map"])
     )
     #output
     output = Output(**raw["output"])

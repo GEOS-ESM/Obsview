@@ -3,12 +3,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 from datetime import datetime
+from dataclasses import replace
 
 
 from ..reference import Reference, Observation
 from ..processing.binning import BinnedData
 from ..stats.statisticsdata import StatisticsData
-from ..stats.calc_stats import count_obs_per_bin
+from ..stats.calc_stats import calculate_stats
 
 
 
@@ -17,14 +18,13 @@ BAR_H = 0.8
 
 def plot_stats(pass_data: BinnedData, fail_data: BinnedData, stats: StatisticsData, 
                obs: Observation, ref: Reference):
-    """
-    4-panel statistics figure. Y-axis scaling/labels adapt to the vertical
-    level type ('channel' or 'pressure') carried by the data.
-    """
+   
     lev_type = pass_data.data.lev_type
-
     data_src = ref.get_instrument_title(obs.instrument)
     data_type = ref.get_variable_title(obs.varname)
+
+    domain = "Global"
+
 
     #For plotting single time or time range
     if pass_data.is_ts:
@@ -35,7 +35,7 @@ def plot_stats(pass_data: BinnedData, fail_data: BinnedData, stats: StatisticsDa
         time = pass_data.data.datetime
         title = f"Exp: {pass_data.data.exp} | {time.strftime('%d%b%Y %HZ')}"
     
-    title2 = f"{data_src} - {data_type}"
+    title2 = f"{data_src} - {data_type} ({domain})"
 
 
     fig = plt.figure(figsize=(10, 7))
@@ -154,28 +154,31 @@ def _panel_sigo(binned_data, stats, lev_type):
 
 
 def _apply_level_axis(ax, pass_data: BinnedData, lev_type: str, title_base: str):
-    #Limit y axis ticks to no more than 22 labels
-    if len(pass_data.bin_labels) <= 22:
-        y_ax = np.arange(len(pass_data.bin_labels))
-        labels = np.int16(pass_data.bin_labels)
-    else: 
-        num_bins = len(pass_data.bin_labels)
-        step = num_bins/20
-        y_ax = np.arange(step,num_bins+step,step)
-        labels = np.int16(np.arange(step,num_bins+step,step))
-        ...
-    ax.set_yticks(y_ax)
-    ax.set_yticklabels(labels)
-    ax.set_ylim(-0.5, len(pass_data.bin_labels) - 0.5)
+    
+
+    
     if lev_type == "pressure":
         ax.invert_yaxis()                 
         ax.set_ylabel("Pressure (hPa)")
         ax.set_title(f"{title_base} vs Pressure",  fontweight = "bold", fontsize = 10)
     elif lev_type == "channel":
-        ax.set_ylabel("Channel")
-        ax.set_title(f"{title_base} vs Channel",  fontweight = "bold", fontsize = 10)
+        #Limit y axis ticks to no more than 22 labels
+        if len(pass_data.bin_labels) <= 22:
+            y_ax = np.arange(len(pass_data.bin_labels))
+            labels = np.int16(pass_data.bin_labels)
+        else: 
+            num_bins = len(pass_data.bin_labels)
+            step = num_bins/20
+            y_ax = np.arange(step,num_bins+step,step)
+            labels = np.int16(np.arange(step,num_bins+step,step))
+            ax.set_ylabel("Channel")
+            ax.set_title(f"{title_base} vs Channel",  fontweight = "bold", fontsize = 10)
     else:
         raise ValueError(f"Unknown lev_type: {lev_type!r}")
+    
+    ax.set_yticks(y_ax)
+    ax.set_yticklabels(labels)
+    ax.set_ylim(-0.5, len(pass_data.bin_labels) - 0.5)
 
     #ax.grid(True, which="major", linestyle="--", alpha=0.5)
     ax.grid(False)

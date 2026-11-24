@@ -2,6 +2,7 @@
 import numpy as np
 from typing import Tuple
 from ..loading.observationdata import ObservationData
+from ..processing.binning import BinnedData
 
 
 #This mask keeps data that isn't a missing value(same as valid_mask() but for data that contains specific fill values)
@@ -32,10 +33,6 @@ def valid_latlon_mask(data: ObservationData) -> np.ndarray:
     )
     return valid_mask
 
-
-# def nh_mask
-# def sh_mask
-# def tr_mask
 
 
 

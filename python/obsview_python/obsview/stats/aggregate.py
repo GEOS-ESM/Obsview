@@ -38,6 +38,7 @@ def aggregate_stats(ts: TimeSeriesData, start_time: datetime, end_time: datetime
     
     dt_count = 0
     nobs = np.zeros(lev_count)
+    mean_obs = np.zeros(lev_count)
     mean_omb = np.zeros(lev_count)
     rms_omb = np.zeros(lev_count)
     mean_oma = np.zeros(lev_count)
@@ -48,11 +49,15 @@ def aggregate_stats(ts: TimeSeriesData, start_time: datetime, end_time: datetime
     mean_esigo = np.zeros(lev_count)
     mean_esigb = np.zeros(lev_count)
     std_omb = np.zeros(lev_count)
+    std_oma = np.zeros(lev_count)
+    std_obs = np.zeros(lev_count)
+    rms_obs = np.zeros(lev_count)
 
     for datetime in time_range:     #Loop over all dts in time range
         dt_count += 1
         if datetime in ts.datetimes:    #If specific datetime from range is equal to one of the timeseries datetimes...
             nobs += ts.pass_stats[ts.datetimes.index(datetime)].nobs
+            mean_obs += ts.pass_stats[ts.datetimes.index(datetime)].mean_obs
             mean_omb += ts.pass_stats[ts.datetimes.index(datetime)].mean_omb
             rms_omb += ts.pass_stats[ts.datetimes.index(datetime)].rms_omb
             # rms_omb += (ts.pass_stats[ts.datetimes.index(datetime)].mean_omb)**2
@@ -65,10 +70,14 @@ def aggregate_stats(ts: TimeSeriesData, start_time: datetime, end_time: datetime
             mean_esigo += ts.pass_stats[ts.datetimes.index(datetime)].mean_esigo
             mean_esigb += ts.pass_stats[ts.datetimes.index(datetime)].mean_esigb
             std_omb += ts.pass_stats[ts.datetimes.index(datetime)].std_omb
+            std_oma += ts.pass_stats[ts.datetimes.index(datetime)].std_oma
+            std_obs += ts.pass_stats[ts.datetimes.index(datetime)].std_obs
+            rms_obs += ts.pass_stats[ts.datetimes.index(datetime)].rms_obs
 
     
     #Calculate time averaged variables
     avg_nobs = nobs/dt_count
+    avg_mean_obs = mean_obs/dt_count
     avg_mean_omb = mean_omb/dt_count
     avg_rms_omb = rms_omb/dt_count
     #avg_rms_omb = np.sqrt(rms_omb/dt_count)
@@ -83,11 +92,15 @@ def aggregate_stats(ts: TimeSeriesData, start_time: datetime, end_time: datetime
     
 
     avg_std_omb = std_omb/dt_count
+    avg_std_oma = std_oma/dt_count
+    avg_std_obs = std_obs/dt_count
+    avg_rms_obs = rms_obs/dt_count
     
     #Assign time averaged variables to StatisticsData attibutes
 
     obj = StatisticsData(
         nobs = avg_nobs,
+        mean_obs = avg_mean_obs,
         mean_omb = avg_mean_omb,
         rms_omb = avg_rms_omb,
         mean_oma = avg_mean_oma,
@@ -97,7 +110,10 @@ def aggregate_stats(ts: TimeSeriesData, start_time: datetime, end_time: datetime
         mean_sigo = avg_mean_sigo,
         mean_esigo = avg_mean_esigo,
         mean_esigb = avg_mean_esigb,
-        std_omb = avg_std_omb
+        std_omb = avg_std_omb,
+        std_oma = avg_std_oma,
+        std_obs = avg_std_obs,
+        rms_obs = avg_rms_obs
     )
 
     return obj

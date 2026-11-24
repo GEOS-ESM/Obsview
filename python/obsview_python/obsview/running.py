@@ -1,31 +1,14 @@
 #Running script to execute code based on config settings
-"""
-Orchestration layer. Takes a validated Config and decides WHAT to run:
-- resolves file locations from directory templates + time range,
-- loops over experiments and targets,
-- dispatches to the enabled plots,
-- honors runtime settings (verbose, parallel) and output settings.
-
-It calls into the existing pipeline/plotting modules but contains no
-pipeline math itself.
-"""
-
-###########
-#TODO: Reconcile start and endtime helper functions(i.e. have the datetime conversion happen once)
-
 import os
 import logging
 import numpy as np
 from datetime import datetime
 from typing import Dict
 from dataclasses import replace
-
 import matplotlib.pyplot as plt
 
 from .config import Config, Experiment, Target
 from .reference import Reference, Observation
-
-# Time series construction + plotting (existing modules).
 from .utils import _parse_time, _dt_to_int
 from .loading.timeseriesdata import TimeSeriesData
 from .loading.search import discover_ods_files, discover_ioda_files
@@ -35,6 +18,7 @@ from .plotting.statsplot import plot_stats
 from .plotting.timeseries import plot_series
 from .plotting.spatialcoverage import plot_coverage
 from .plotting.purple import plot_purple
+#from .plotting.radmon import plot_radmon
 
 
 log = logging.getLogger("obsview")
@@ -45,11 +29,6 @@ log = logging.getLogger("obsview")
 # ============================================================
 
 def run(cfg: Config, ref: Reference) -> None:
-    #_configure_logging(cfg)
-
-    #log.info("Starting run: file_type=%s, %d experiment(s), %d target(s)",
-             #cfg.file_type, len(cfg.experiments), len(cfg.targets))
-
     start = _parse_time(cfg.selection.time_range.start)
     end = _parse_time(cfg.selection.time_range.end)
 
@@ -65,7 +44,6 @@ def run(cfg: Config, ref: Reference) -> None:
         _make_enabled_plots(cfg, target, ts_by_exp, ag_by_exp, start, end, ref)
         plt.show()
 
-    #log.info("Run complete.")
     print(f"Run complete")
 
 # ============================================================
@@ -157,8 +135,6 @@ def _make_enabled_plots(cfg: Config, target: Target,
                         start: datetime, end: datetime, ref: Reference) -> None:
     plots = cfg.plots
 
-    
-
     if plots.statistics.enabled:
         _dispatch_statistics(cfg, target, ag_by_exp, start, end, ref)
 
@@ -172,7 +148,8 @@ def _make_enabled_plots(cfg: Config, target: Target,
     if plots.time_series.enabled:
         _dispatch_time_series(cfg,target,ts_by_exp, start, end, ref)
 
-
+    if plots.monitoring_map.enabled:
+        _dispatch_monitoring() #Fill this in
         ...
 
 
@@ -185,15 +162,13 @@ def _dispatch_statistics(cfg: Config, target: Target, ag_by_exp, start: datetime
     obs = ref.get_observation(target.instrument, target.varname)
 
     for exp in ag_by_exp:
-        stats = ag_by_exp[exp][0]
-        pass_data = ag_by_exp[exp][1]
-        fail_data = ag_by_exp[exp][2]
-        fig = plot_stats(pass_data, fail_data, stats, obs, ref)
-        _finalize(cfg,fig,"stats",target,exp, start, end)
+        for region in cfg.selection.domain:
+            stats = ag_by_exp[exp][0]
+            pass_data = ag_by_exp[exp][1]
+            fail_data = ag_by_exp[exp][2]
+            fig = plot_stats(pass_data, fail_data, stats, obs, ref)
+            _finalize(cfg,fig,"stats",target,exp, start, end)
         
-    
-
-
 def _dispatch_time_series(cfg, target, ts_by_exp, start: datetime, end: datetime, ref: Reference) -> None:
     level = target.level
     start = _dt_to_int(start)
@@ -237,19 +212,38 @@ def _dispatch_coverage(cfg: Config,target:Target, ts_by_exp, start, end, ref: Re
             fig = plot_coverage(pass_data, fail_data, obs, ref, map_level=level)
             _finalize_lev(cfg, fig, "coverage", target, exp, start, end, level_num)
 
-
 def _dispatch_comparison(cfg: Config, ag_by_exp, target: Target, ref: Reference) -> None:
-    stats_type = cfg.plots.comparison.stat_type
+    #Load respective objects
+    stat_type = cfg.plots.comparison.stat_type
+    plot_var = cfg.plots.comparison.variable
+
     iter_values = iter(ag_by_exp.values())
     ctl_values = next(iter_values)
     ctl_stats = ctl_values[0]
     ctl_bins = ctl_values[1]
     exp_stats = next(iter_values)[0]
-
     obs = ref.get_observation(target.instrument, target.varname)
 
-    fig = plot_purple(ctl_bins,ctl_stats,exp_stats, stats_type, cfg, obs, ref)
+    #Make plot
+    fig = plot_purple(ctl_bins,ctl_stats,exp_stats, stat_type, plot_var, cfg, obs, ref)
 
+    #Output section
+    out = cfg.output
+    mode = out.mode
+    start = _dt_to_int(_parse_time(cfg.selection.time_range.start))
+    end = _dt_to_int(_parse_time(cfg.selection.time_range.end))
+    if mode in ("save", "both"):
+        os.makedirs(out.save_directory, exist_ok=True)
+        # {ctl}.{exp}.{instrument}.{start}-{end}
+        fname = f"{cfg.experiments[0].id}.{cfg.experiments[1].id}.{target.instrument}.{start}-{end}"
+        path = os.path.join(out.save_directory, f"{fname}.{out.format}")
+        fig.savefig(path, dpi=out.dpi, bbox_inches="tight")
+    if mode in ("show", "both"):
+        plt.show()
+    plt.close(fig)
+
+def _dispatch_monitoring(cfg: Config, ref: Reference) -> None:
+    ...
 
 # ============================================================
 # Output handling
